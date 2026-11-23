@@ -7,7 +7,6 @@
 
 local flags = {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}
 local cv_steps = CreateConVar("limbo_footsteps", "1", flags, "Limbo: 1 = Limbo's footstep set, 0 = Z-City's footsteps", 0, 1)
-local cv_debug = CreateConVar("limbo_footsteps_debug", "0", {FCVAR_ARCHIVE}, "Limbo: print each footstep sound to the console", 0, 1)
 local cv_rattle = CreateConVar("limbo_gearrattle", "1", flags, "Limbo: running with gear on makes it rattle", 0, 1)
 
 if CLIENT then return end
@@ -28,15 +27,11 @@ end
 
 hook.Add("HG_PlayerFootstep", "limbo_footsteps", function(ply, pos, foot, sound, volume, rf)
 	if not cv_steps:GetBool() then return end
-	if (ply.PlayerClassName or "") ~= "" then -- classes keep their own footsteps
-		if cv_debug:GetBool() then print("[limbo] footstep skipped, class " .. tostring(ply.PlayerClassName)) end
-		return
-	end
+	if (ply.PlayerClassName or "") ~= "" then return end -- classes keep their own footsteps
 	if ply:IsWalking() or ply:Crouching() then return end
 	if hg.GetCurrentCharacter(ply) ~= ply then return end
 
 	local snd = LimboStep(sound)
-	if cv_debug:GetBool() then print("[limbo] footstep " .. tostring(sound) .. " -> " .. tostring(snd or "z-city's")) end
 	if not snd then return end
 
 	EmitSound(snd, pos, ply:EntIndex(), CHAN_AUTO, volume, 75, nil, math.random(95, 105))

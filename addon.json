@@ -8,6 +8,7 @@
 		".git/*",
 		".github/*",
 		".gitignore",
-		"_base/*"
+		"_base/*",
+		"lua/homigrad/limbo/debug/*"
 	]
 }

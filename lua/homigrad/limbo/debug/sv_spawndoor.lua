@@ -1,4 +1,4 @@
--- Limbo: test tools (admins only)
+-- Limbo debug: test door spawner (admins only). The debug folder is left out of Workshop builds.
 --
 -- limbo_spawndoor      spawns a wooden door where you're looking
 -- limbo_spawndoor 1    same, but locked (shoot the handle to unlock it)
