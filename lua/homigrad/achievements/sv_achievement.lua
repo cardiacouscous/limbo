@@ -176,66 +176,17 @@ end)
     hg.achievements.CreateAchievementType("drugs",1,0,"Die from opioids overdose.","Overstimulated", nil, false)
     -- TERMINATOR
     hg.achievements.CreateAchievementType("illbeback",3,0,"Get shot in the head and get up alive.","I'll be back", nil, true)
-    -- kill everyone
-    hg.achievements.CreateAchievementType("killemall",1,0,"Kill everyone being a traitor and win the round\nplayers on the server should be more than 9.","Kill Em All", nil, false)
     -- russian roulette
     hg.achievements.CreateAchievementType("deadlygambling",10,0,"Survive 10 games of Russian roulette in one life.","Deadly Gambling", nil, true)
-    -- lobotomized kill
-    hg.achievements.CreateAchievementType("lobotomygaming",1,0,"Kill the traitor while having brain damage","Hydrogen bomb vs Lobotomized patient", nil, false)
-    -- hot potato
-    hg.achievements.CreateAchievementType("hotpotato",1,0,"Kill the traitor using his own grenade","Hot Potato", nil, false)
-    -- please calm down
-    hg.achievements.CreateAchievementType("bking", 1, 0, "Something terrible happened on that plane...", "Sir please calm down", nil, false)
 
     //hg.init_ach = true
 //end
 
-local roundply = 0
-
-hook.Add("ZB_StartRound","hg_killemall_Acchivment",function()
-    roundply = 0
-    for k,v in player.Iterator() do
-        roundply = roundply + 1
-    end
-end)
-
-hook.Add("ZB_TraitorWinOrNot","hg_killemall_Acchivment",function(ply,winner)
-    --if gmod.GetGamemode() ~= "zcity" then return end
-
-    if winner == 1 and (ply.TraitorKills or 0 >= roundply - 1) and roundply >= 10 then
-        hg.achievements.SetPlayerAchievement(ply,"killemall",1)
-    end
-end)
-
-hook.Add("PlayerDeath", "hg_killemall_Acchivment", function(ply)
+hook.Add("PlayerDeath", "hg_deadlygambling_reset", function(ply)
     local ach = hg.achievements.GetPlayerAchievement(ply,"deadlygambling")
     if ach["value"] ~= 10 and ach["value"] ~= 0 then
         hg.achievements.SetPlayerAchievement(ply, "deadlygambling", 0)
     end
-
-    if ply.isTraitor then
-        if IsValid(ply.ZBestAttacker) and ply != ply.ZBestAttacker then
-            if ply.ZBestAttacker:Alive() and ply.ZBestAttacker.organism.brain >= 0.1 then
-                hg.achievements.SetPlayerAchievement(ply.ZBestAttacker, "lobotomygaming", 1)
-            end
-            
-            if IsValid(ply.ZBestInflictor) and ply.ZBestInflictor.ishggrenade and ply.ZBestInflictor.owner2 == ply and IsValid(ply.ZBestInflictor.owner) then
-                hg.achievements.SetPlayerAchievement(ply.ZBestInflictor.owner, "hotpotato", 1)
-            end
-        end
-
-        ply.TraitorKills = 0
-
-        return
-    end
-
-    if IsValid(ply.ZBestAttacker) and ply.ZBestAttacker.isTraitor then
-        ply.ZBestAttacker.TraitorKills = (ply.ZBestAttacker.TraitorKills or 0) + 1
-    end
-end)
-
-hook.Add("PlayerSilentDeath","hg_illbeback_Acchivment",function(ply)
-    if ply.isTraitor then ply.TraitorKills = 0 return end
 end)
 
 hook.Add("HomigradDamage","hg_illbeback_Acchivment",function(ply, dmgInfo, hitgroup, ent, harm, hitBoxs)
@@ -251,7 +202,7 @@ hook.Add("HG_OnOtrub","hg_illbeback_Acchivment",function(ply)
     if ply:IsRagdoll() then
         ply = hg.RagdollOwner(ply)
     end
-    if hg.achievements.GetPlayerAchievement(ply,"illbeback")["value"] == 1 and ply.illbeback > CurTime() then
+    if hg.achievements.GetPlayerAchievement(ply,"illbeback")["value"] == 1 and (ply.illbeback or 0) > CurTime() then
         hg.achievements.SetPlayerAchievement(ply,"illbeback",2)
     end
 end)
@@ -278,30 +229,30 @@ hook.Add("HG_OnWakeOtrub","hg_illbeback_Acchivment",function(ply)
     end
 end)
 
-local tblToFind_bking = {
-    {"sir","sir"},
-    {"сэр","sir"},
-    {"please","please"},
-    {"пожалуйста","please"},
-    {"calm down","calm down"},
-	{"успокойтесь","calm down"}
-}
-hook.Add("HG_PlayerSay","burgerking",function(ply, txtTbl, txt)
-    local bking = {
-        ["sir"] = false,
-        ["please"] = false,
-        ["calm down"] = false
-    }
-    for _, v in ipairs(tblToFind_bking) do
-        local found = string.find( txt:lower(), v[1] )
-        --print(found)
-        if found then
-            bking[v[2]] = true
-        end
-    end
 
-    if bking["sir"] and bking["please"] and bking["calm down"] then
-        hg.achievements.SetPlayerAchievement(ply,"bking",1)
-		ply:PS_AddItem("burger king crown")
+
+-- Limbo: also save when the server shuts down (the host leaving a listen server doesn't always count as a disconnect)
+hook.Add("ShutDown", "limbo_saveachievements", function()
+    if hg.achievements.SqlActive then hg.achievements.SavePlayerAchievements() end
+end)
+
+-- Limbo's own achievements
+hg.achievements.CreateAchievementType("limbo_again", 10, 0, "Die ten times.", "Again", nil, true)
+hg.achievements.CreateAchievementType("limbo_stillhere", 30, 0, "Stay alive for thirty minutes.", "Still here", nil, true)
+hg.achievements.CreateAchievementType("limbo_notyet", 1, 0, "Wake yourself up.", "Not yet", nil, false)
+
+hook.Add("PlayerDeath", "limbo_achievements", function(ply)
+    hg.achievements.AddPlayerAchievement(ply, "limbo_again", 1)
+
+    local val = hg.achievements.GetPlayerAchievement(ply, "limbo_stillhere")["value"] or 0
+    if val < 30 and val ~= 0 then hg.achievements.SetPlayerAchievement(ply, "limbo_stillhere", 0) end
+end)
+
+timer.Create("limbo_stillhere", 60, 0, function()
+    for _, ply in player.Iterator() do
+        if ply:Alive() and ply:Team() ~= TEAM_SPECTATOR then
+            local val = hg.achievements.GetPlayerAchievement(ply, "limbo_stillhere")["value"] or 0
+            if val < 30 then hg.achievements.SetPlayerAchievement(ply, "limbo_stillhere", val + 1) end
+        end
     end
 end)
