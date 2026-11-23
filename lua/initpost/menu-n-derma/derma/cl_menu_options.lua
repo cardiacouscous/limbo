@@ -96,17 +96,17 @@ local function CreateSettingsFonts()
     })
     surface.CreateFont("ZCity_Menu_Settings_Medium", {
         font = "Limbo Dokdo",
-        size = math.max(16, math.floor(32 * scale)),
+        size = math.max(20, math.floor(40 * scale)),
         weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Settings_Small", {
         font = "Limbo Dokdo",
-        size = math.max(14, math.floor(22 * scale)),
+        size = math.max(18, math.floor(28 * scale)),
         weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Settings_Tiny", {
         font = "Arial",
-        size = math.max(12, math.floor(16 * scale)),
+        size = math.max(14, math.floor(18 * scale)),
         weight = 700,
     })
     surface.CreateFont("ZCity_Menu_Settings_Category", {

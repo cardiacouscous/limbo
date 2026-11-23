@@ -26,26 +26,26 @@ local function CreateAchievementFonts()
 
     surface.CreateFont("ZCity_Ach_Title", {
         font = usefont,
-        size = math.max(18, math.floor(34 * scale)),
-        weight = 300
+        size = math.max(22, math.floor(42 * scale)),
+        weight = 400
     })
 
     surface.CreateFont("ZCity_Ach_Medium", {
         font = usefont,
-        size = math.max(16, math.floor(26 * scale)),
-        weight = 300
+        size = math.max(20, math.floor(32 * scale)),
+        weight = 400
     })
 
     surface.CreateFont("ZCity_Ach_Small", {
         font = usefont,
-        size = math.max(14, math.floor(20 * scale)),
-        weight = 300
+        size = math.max(18, math.floor(27 * scale)),
+        weight = 400
     })
 
     surface.CreateFont("ZCity_Ach_Tiny", {
-        font = usefont,
-        size = math.max(12, math.floor(16 * scale)),
-        weight = 300
+        font = "Arial",
+        size = math.max(14, math.floor(19 * scale)),
+        weight = 700
     })
 end
 
