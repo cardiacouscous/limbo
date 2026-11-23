@@ -73,6 +73,10 @@ if not game.IsDedicated() then
 	hg.settings:AddOpt("Server-side settings","hg_coolhands", "Give cool hands instead of default hands on spawn")
 	hg.settings:AddOpt("Server-side settings","hg_loadcontent", "Toggle loading content to clients using 'resource.AddWorkshop' (need server restart to apply)")
     hg.settings:AddOpt("Server-side settings","homicide_traitoramount", "Homicide: Traitor Amount", nil, nil, "int")
+	hg.settings:AddOpt("Server-side settings","limbo_cleanup", "Limbo: remove old corpses and dropped weapons")
+	hg.settings:AddOpt("Server-side settings","limbo_cleanup_time", "Limbo: minutes before something can be removed", nil, nil, "int")
+	hg.settings:AddOpt("Server-side settings","limbo_cleanup_keeplast", "Limbo: keep each player's latest corpse and its gear")
+	hg.settings:AddOpt("Server-side settings","limbo_cleanup_radius", "Limbo: never remove things this close to a living player (0 = off)", nil, nil, "int")
 end
 --hg_appearance_access_for_all
 --hg_furcity
