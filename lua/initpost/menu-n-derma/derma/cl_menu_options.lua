@@ -85,7 +85,7 @@ local function CreateSettingsFonts()
     local scale = math.min(ScrW(), ScrH()) / 1000
 
     surface.CreateFont("ZCity_Menu_Small", {
-        font = "Anton",
+        font = "Dokdo",
         size = ScreenScale(20),
         weight = 400,
     })
@@ -95,12 +95,12 @@ local function CreateSettingsFonts()
         weight = 700,
     })
     surface.CreateFont("ZCity_Menu_Settings_Medium", {
-        font = "Anton",
+        font = "Dokdo",
         size = math.max(16, math.floor(32 * scale)),
         weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Settings_Small", {
-        font = "Anton",
+        font = "Dokdo",
         size = math.max(14, math.floor(22 * scale)),
         weight = 400,
     })
@@ -110,7 +110,7 @@ local function CreateSettingsFonts()
         weight = 700,
     })
     surface.CreateFont("ZCity_Menu_Settings_Category", {
-        font = "Anton",
+        font = "Dokdo",
         size = ScreenScale(15),
         weight = 400
     })

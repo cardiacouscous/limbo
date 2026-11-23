@@ -17,7 +17,7 @@ local function MenuUnit(num)
 end
 
 local function AchievementFontName()
-    return "Anton"
+    return "Dokdo"
 end
 
 local function CreateAchievementFonts()

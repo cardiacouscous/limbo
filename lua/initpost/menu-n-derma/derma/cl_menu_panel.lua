@@ -140,7 +140,7 @@ local function CreateMainMenuFonts()
     })
 
     surface.CreateFont("ZCity_Menu_Small", {
-        font = "Anton",
+        font = "Dokdo",
         size = ScreenScale(17),
         weight = 400
     })
@@ -148,7 +148,7 @@ end
 
 hook.Add("OnScreenSizeChanged", "ZCity_MainMenu_Fonts", CreateMainMenuFonts)
 local function LimboWallFont()
-    surface.CreateFont("Limbo_Wall", {font = "Anton", size = ScreenScale(48), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_Wall", {font = "Dokdo", size = ScreenScale(48), weight = 400, antialias = true})
 end
 LimboWallFont()
 hook.Add("OnScreenSizeChanged", "Limbo_WallFont", LimboWallFont)
@@ -190,7 +190,7 @@ local splasheh = {
 
 --print(string.upper('I wish you good health, Jason Statham'))
 surface.CreateFont("ZC_MM_Title", {
-    font = "Anton",
+    font = "Dokdo",
     size = ScreenScale(40),
     weight = 400,
     antialias = true
@@ -1075,7 +1075,7 @@ function PANEL:Paint(w,h)
         surface.SetFont("Limbo_Wall")
         local word = string.rep("again ", 12)
         local _, lh = surface.GetTextSize(word)
-        local wall = Color(255, 255, 255, 9 * backgroundAlpha / 255)
+        local wall = Color(255, 255, 255, 7 * backgroundAlpha / 255)
         local unit = surface.GetTextSize("again ")
         local speeds = {6, -4, 9, -7, 5, -10, 8}
         local row = 0
@@ -1281,7 +1281,7 @@ function PANEL:AddSelect( pParent, strTitle, tbl )
             surface.DrawRect(0, h / 2 - th * 0.32, barW * hov, th * 0.64)
         end
 
-        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), pad, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 200))
+        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), pad, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, math.max(2, MenuUnit(2)), color_black) -- Limbo: same thin black outline as the logo
         return true
     end
 end
