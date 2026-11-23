@@ -759,9 +759,12 @@ function PANEL:CreateAppearancePreview()
         local now = RealTime()
         local busy = (self.OwnerMenu and self.OwnerMenu.DisconnectCutscene) or self.EntityAngleOverride ~= nil
 
-        -- where the cursor is, as head angles (screen right = the model's left)
-        local lookYaw = -10 + nx * 38
-        local lookPitch = 4 + ny * 16
+        -- where the cursor is, seen from the head's spot on screen (screen right = the model's left)
+        local hx, hy = self:LocalToScreen(self:GetWide() * 0.5, self:GetTall() * 0.12)
+        local cmx, cmy = gui.MouseX(), gui.MouseY()
+        if cmx <= 0 and cmy <= 0 then cmx, cmy = ScrW() * 0.5, ScrH() * 0.5 end
+        local lookYaw = math.Clamp((cmx - hx) / ScrW() * 95, -75, 60)
+        local lookPitch = math.Clamp((cmy - hy) / ScrH() * 70, -30, 40)
 
         -- moving the mouse gets its attention back
         local mx, my = gui.MouseX(), gui.MouseY()
@@ -801,8 +804,8 @@ function PANEL:CreateAppearancePreview()
             lookYaw, lookPitch = appearance_preview.head_yaw, appearance_preview.head_pitch
         end
 
-        self.HeadYawLerp = LerpFT(0.07, self.HeadYawLerp or lookYaw, lookYaw)
-        self.HeadPitchLerp = LerpFT(0.07, self.HeadPitchLerp or lookPitch, lookPitch)
+        self.HeadYawLerp = LerpFT(0.1, self.HeadYawLerp or lookYaw, lookYaw)
+        self.HeadPitchLerp = LerpFT(0.1, self.HeadPitchLerp or lookPitch, lookPitch)
         ent:SetPoseParameter("head_yaw", self.HeadYawLerp)
         ent:SetPoseParameter("head_pitch", self.HeadPitchLerp)
 
@@ -811,28 +814,6 @@ function PANEL:CreateAppearancePreview()
         local eyePitch = math.rad(self.HeadPitchLerp + (lookPitch - self.HeadPitchLerp) * 0.6)
         ent:SetEyeTarget(Vector(math.cos(eyeYaw) * 100, math.sin(eyeYaw) * 100, 64 - math.tan(eyePitch) * 100))
 
-        -- breathing and a slow weight shift, plus an occasional shoulder roll
-        local function Bone(name, ang)
-            local id = ent:LookupBone(name)
-            if id then ent:ManipulateBoneAngles(id, ang) end
-        end
-        local breathe = math.sin(now * 1.7)
-        local shift = math.sin(now * 0.23) + 0.4 * math.sin(now * 0.61)
-        self.NextShrug = self.NextShrug or now + math.Rand(9, 16)
-        local shrug = 0
-        if not busy and now >= self.NextShrug then
-            local t = (now - self.NextShrug) / 1.1
-            if t >= 1 then
-                self.NextShrug = now + math.Rand(10, 18)
-            else
-                shrug = math.sin(t * math.pi)
-            end
-        end
-        Bone("ValveBiped.Bip01_Spine2", Angle(0, breathe * 1.2, 0))
-        Bone("ValveBiped.Bip01_Spine", Angle(shift * 1.6, 0, shift * 0.8))
-        Bone("ValveBiped.Bip01_Pelvis", Angle(0, 0, -shift * 1.4))
-        Bone("ValveBiped.Bip01_L_Clavicle", Angle(0, 0, -shrug * 9 - breathe * 0.6))
-        Bone("ValveBiped.Bip01_R_Clavicle", Angle(0, 0, -shrug * 7 - breathe * 0.6))
         
         if self.OwnerMenu and self.OwnerMenu.DisconnectCutscene then
             ent:SetPoseParameter("move_x", 1)
@@ -962,18 +943,60 @@ function PANEL:Init()
         self:AddSelect(lDock, v.Title, v)
     end
 
-    surface.CreateFont("Limbo_Logo", {font = "Anton", size = MenuUnit(120), weight = 400, antialias = true})
+    local logoMat = Material("limbo/logo.png", "smooth mips")
+    local tagMat = Material("limbo/tagline.png", "smooth mips")
     local logoPanel = vgui.Create("DPanel", lDock)
     self.logoPanel = logoPanel
     logoPanel:Dock(BOTTOM)
-    logoPanel:SetTall(MenuUnit(150))
+    logoPanel:SetTall(MenuUnit(190))
     logoPanel:SetMouseInputEnabled(true)
     logoPanel:DockMargin(0, 0, 0, MenuUnit(menu_title.spacing))
     self.logoBaseMargin = MenuUnit(menu_title.spacing)
     logoPanel.Paint = function(this, w, h)
         local driftX, driftY = self:GetLiveOffset(MenuUnit(menu_live.logo_drift_x), MenuUnit(menu_live.logo_drift_y))
         local shakeX, shakeY = self:GetLiveShake(6.4, 7.2, MenuUnit(menu_live.shake_x), MenuUnit(menu_live.shake_y))
-        draw.SimpleText("limbo", "Limbo_Logo", MenuUnit(20) + driftX + shakeX, h * 0.5 + driftY + shakeY, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+        -- logo image is 1008 x 263, tagline 627 x 104, drawn at the same scale
+        local lw = MenuUnit(400)
+        local sc = lw / 1008
+        local lh = 263 * sc
+        local tw, th = 627 * sc, 104 * sc
+        local x = MenuUnit(10) + driftX + shakeX
+        local y = h * 0.5 - (lh + th) * 0.5 + driftY + shakeY
+        local tx, ty = x + 27 * sc, y + lh - 3 * sc
+
+        -- echo: copies drift out behind the word, hold, slide back in, rest, again
+        local function Spread(offset)
+            local t = ((RealTime() + offset) % 7) / 7
+            local v
+            if t < 0.3 then v = t / 0.3
+            elseif t < 0.45 then v = 1
+            elseif t < 0.8 then v = 1 - (t - 0.45) / 0.35
+            else v = 0 end
+            return v * v * (3 - 2 * v)
+        end
+
+        local spread = Spread(0)
+        if spread > 0.01 then
+            for i = 3, 1, -1 do
+                surface.SetMaterial(logoMat)
+                surface.SetDrawColor(255, 255, 255, (110 - i * 28) * spread)
+                surface.DrawTexturedRect(x + spread * i * MenuUnit(9), y - spread * i * MenuUnit(2), lw, lh)
+            end
+        end
+        surface.SetMaterial(logoMat)
+        surface.SetDrawColor(255, 255, 255, 255)
+        surface.DrawTexturedRect(x, y, lw, lh)
+
+        local tspread = Spread(-0.6)
+        if tspread > 0.01 then
+            surface.SetMaterial(tagMat)
+            surface.SetDrawColor(255, 255, 255, 60 * tspread)
+            surface.DrawTexturedRect(tx + tspread * MenuUnit(6), ty, tw, th)
+        end
+        surface.SetMaterial(tagMat)
+        surface.SetDrawColor(255, 255, 255, 230)
+        surface.DrawTexturedRect(tx, ty, tw, th)
     end
 
 
