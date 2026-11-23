@@ -2602,8 +2602,11 @@ local function SyncMeleeAnimToCooldown(self, timing)
     self.animtime = CurTime() - internalTiming * animspeed + animspeed
 end
 
+local limbo_melee_hitstop = ConVarExists("limbo_melee_hitstop") and GetConVar("limbo_melee_hitstop") or CreateConVar("limbo_melee_hitstop", "0", {FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY}, "Limbo: melee swings pause and bounce when they hit something", 0, 1)
+
 local function QueueMeleeHitStop(self, speedMul, pause, reverse, stopanim)
     if not CLIENT then return end
+    if not limbo_melee_hitstop:GetBool() then return end -- Limbo: off by default, swings carry through
 
     self.hitstopToken = (self.hitstopToken or 0) + 1
 
