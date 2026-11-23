@@ -1,0 +1,13 @@
+{
+	"title": "Limbo",
+	"type": "gamemode",
+	"tags": ["fun", "realism"],
+	"ignore": [
+		"*.dll",
+		"*.md",
+		".git/*",
+		".github/*",
+		".gitignore",
+		"_base/*"
+	]
+}
