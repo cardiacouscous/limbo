@@ -755,12 +755,84 @@ function PANEL:CreateAppearancePreview()
             local _, _, newNX, newNY = owner:GetLiveMouse()
             nx, ny = newNX, newNY
         end
-        local targetYaw = appearance_preview.head_yaw - nx * appearance_preview.head_mouse_yaw
-        local targetPitch = appearance_preview.head_pitch - ny * appearance_preview.head_mouse_pitch
-        self.HeadYawLerp = LerpFT(0.08, self.HeadYawLerp or appearance_preview.head_yaw, targetYaw)
-        self.HeadPitchLerp = LerpFT(0.08, self.HeadPitchLerp or appearance_preview.head_pitch, targetPitch)
+        -- Limbo: the character watches your cursor, and now and then glances away or shifts its weight
+        local now = RealTime()
+        local busy = (self.OwnerMenu and self.OwnerMenu.DisconnectCutscene) or self.EntityAngleOverride ~= nil
+
+        -- where the cursor is, as head angles (screen right = the model's left)
+        local lookYaw = -10 + nx * 38
+        local lookPitch = 4 + ny * 16
+
+        -- moving the mouse gets its attention back
+        local mx, my = gui.MouseX(), gui.MouseY()
+        if self.LastMouseX and (math.abs(mx - self.LastMouseX) + math.abs(my - self.LastMouseY)) > 6 then
+            self.LastMouseMove = now
+        end
+        self.LastMouseX, self.LastMouseY = mx, my
+
+        -- glances: every so often look somewhere else for a moment
+        self.NextGlance = self.NextGlance or now + math.Rand(4, 8)
+        if not busy and not self.Glance and now >= self.NextGlance and now - (self.LastMouseMove or 0) > 1.5 then
+            local kinds = {
+                {yaw = math.Rand(-60, -35), pitch = math.Rand(-4, 6)},   -- over its shoulder
+                {yaw = math.Rand(25, 45), pitch = math.Rand(-2, 8)},     -- the other way
+                {yaw = math.Rand(-15, 15), pitch = math.Rand(22, 30)},   -- down at the floor
+                {yaw = math.Rand(-20, 20), pitch = math.Rand(-12, -6)},  -- up
+            }
+            self.Glance = kinds[math.random(#kinds)]
+            self.Glance.start = now
+            self.Glance.len = math.Rand(1.2, 2.6)
+        end
+        local glanceMul = 0
+        if self.Glance then
+            local g = self.Glance
+            local t = (now - g.start) / g.len
+            if t >= 1 or busy or (self.LastMouseMove or 0) > g.start then
+                self.Glance = nil
+                self.NextGlance = now + math.Rand(5, 11)
+            else
+                glanceMul = math.min(t / 0.18, 1, (1 - t) / 0.25)
+                glanceMul = glanceMul * glanceMul * (3 - 2 * glanceMul)
+                lookYaw = Lerp(glanceMul, lookYaw, g.yaw)
+                lookPitch = Lerp(glanceMul, lookPitch, g.pitch)
+            end
+        end
+        if busy then
+            lookYaw, lookPitch = appearance_preview.head_yaw, appearance_preview.head_pitch
+        end
+
+        self.HeadYawLerp = LerpFT(0.07, self.HeadYawLerp or lookYaw, lookYaw)
+        self.HeadPitchLerp = LerpFT(0.07, self.HeadPitchLerp or lookPitch, lookPitch)
         ent:SetPoseParameter("head_yaw", self.HeadYawLerp)
         ent:SetPoseParameter("head_pitch", self.HeadPitchLerp)
+
+        -- eyes lead the head a little
+        local eyeYaw = math.rad(self.HeadYawLerp + (lookYaw - self.HeadYawLerp) * 0.6)
+        local eyePitch = math.rad(self.HeadPitchLerp + (lookPitch - self.HeadPitchLerp) * 0.6)
+        ent:SetEyeTarget(Vector(math.cos(eyeYaw) * 100, math.sin(eyeYaw) * 100, 64 - math.tan(eyePitch) * 100))
+
+        -- breathing and a slow weight shift, plus an occasional shoulder roll
+        local function Bone(name, ang)
+            local id = ent:LookupBone(name)
+            if id then ent:ManipulateBoneAngles(id, ang) end
+        end
+        local breathe = math.sin(now * 1.7)
+        local shift = math.sin(now * 0.23) + 0.4 * math.sin(now * 0.61)
+        self.NextShrug = self.NextShrug or now + math.Rand(9, 16)
+        local shrug = 0
+        if not busy and now >= self.NextShrug then
+            local t = (now - self.NextShrug) / 1.1
+            if t >= 1 then
+                self.NextShrug = now + math.Rand(10, 18)
+            else
+                shrug = math.sin(t * math.pi)
+            end
+        end
+        Bone("ValveBiped.Bip01_Spine2", Angle(0, breathe * 1.2, 0))
+        Bone("ValveBiped.Bip01_Spine", Angle(shift * 1.6, 0, shift * 0.8))
+        Bone("ValveBiped.Bip01_Pelvis", Angle(0, 0, -shift * 1.4))
+        Bone("ValveBiped.Bip01_L_Clavicle", Angle(0, 0, -shrug * 9 - breathe * 0.6))
+        Bone("ValveBiped.Bip01_R_Clavicle", Angle(0, 0, -shrug * 7 - breathe * 0.6))
         
         if self.OwnerMenu and self.OwnerMenu.DisconnectCutscene then
             ent:SetPoseParameter("move_x", 1)
