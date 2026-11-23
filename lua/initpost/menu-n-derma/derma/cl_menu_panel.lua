@@ -89,6 +89,16 @@ local function UpdateMainMenuMusic(owner)
         return
     end
 
+    -- Limbo: on disconnect the music swells while he walks off; it's cut when the screen goes black
+    if owner.DisconnectCutscene then
+        local station = menu_music_station or menu_music_pending_station
+        if IsValid(station) then
+            local t = math.Clamp((CurTime() - (owner.DisconnectFadeStart or CurTime())) / 2.8, 0, 1)
+            station:SetVolume(Lerp(t * t, menu_music_volume, 1))
+        end
+        return
+    end
+
     if menu_music_station and menu_music_station_path ~= menu_music_target_path and not menu_music_pending_station then
         QueueMainMenuMusic(owner, menu_music_target_path)
     end
@@ -1101,8 +1111,6 @@ function PANEL:PlayDisconnectCutscene()
     self:SetKeyboardInputEnabled(false)
     self:SetMouseInputEnabled(false)
 
-    StopMainMenuMusic()
-
     if IsValid(self.previewHolder) then
         self.previewHolder:SetVisible(true)
         self.previewHolder:SetAlpha(255)
@@ -1127,6 +1135,7 @@ function PANEL:PlayDisconnectCutscene()
 
     local function startBlackFade()
         if not IsValid(self) then return end
+        StopMainMenuMusic() -- Limbo: hard cut as it goes black
         self.DisconnectBlackStart = CurTime()
         self.DisconnectBlackAlpha = 0
         timer.Simple(disconnect_cutscene.black_fade_time + disconnect_cutscene.disconnect_delay, function()

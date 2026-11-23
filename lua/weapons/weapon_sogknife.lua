@@ -6,10 +6,10 @@ SWEP.Category = "Weapons - Melee"
 SWEP.Spawnable = true
 SWEP.AdminOnly = false
 
-SWEP.WorldModel = "models/weapons/combatknife/tactical_knife_iw7_wm.mdl"
+SWEP.WorldModel = "models/zcity/weapons/w_sog_knife.mdl"
 SWEP.WorldModelReal = "models/weapons/gleb/c_knife_t.mdl"
 SWEP.WorldModelExchange = "models/zcity/weapons/w_sog_knife.mdl"
-SWEP.DontChangeDropped = true
+SWEP.DontChangeDropped = false
 SWEP.modelscale = 1.4
 SWEP.modelscale2 = 1
 
@@ -19,14 +19,52 @@ SWEP.SuicideCutVec = Vector(1, -5, 4)
 SWEP.SuicideCutAng = Angle(10, 0, 0)
 SWEP.SuicideTime = 0.5
 SWEP.CanSuicide = true
+SWEP.SuicidePunchAng = Angle(35, 0, 25)
+
+SWEP.Canselfharm = true
+SWEP.harmwhere = {"larmartery = 1"}
+SWEP.SelfHarmCutLocalPos = Vector(6, -0.8, 0)
+SWEP.SelfHarmCutLocalAng = Angle(0, 0, 0)
+
+SWEP.SelfHarmPos = Vector(17, -7, -5)
+SWEP.SelfHarmAng = Angle(-40, 115, 15)
+SWEP.SelfHarmCutVec = Vector(4, -5, 7)
+SWEP.SelfHarmCutAng = Angle(25, 35, 14)
+SWEP.SelfHarmTime = 0.6
+SWEP.SelfHarmPunchAng = Angle(-1, -1, 0)
+SWEP.SelfHarmHoldType = "revolver"
+SWEP.SelfHarmShakePos = 0.04
+SWEP.SelfHarmShakeAng = 0.75
+
+SWEP.LHIKSelfHarmPos = Vector(2, 1 , 15)
+SWEP.LHIKSelfHarmAng = Angle(-12,70,85)
+
+SWEP.SelfHarmLeftPos = Vector(2, 1, 15)
+SWEP.SelfHarmLeftAng = Angle(-12, 70, 85)
+
+SWEP.SelfHarmCutLeftPos = Vector(-2, 1, 17)
+SWEP.SelfHarmCutLeftAng = Angle(-12, 70, 85)
+
+
+SWEP.PenetrationSizePrimary = 2
+SWEP.PenetrationSizeSecondary = 0
+
+
+SWEP.PenetrationPrimary = 4
+SWEP.PenetrationSecondary = 0
 
 SWEP.BleedMultiplier = 1.5
 SWEP.PainMultiplier = 1.8
 
-SWEP.DamagePrimary = 20
+SWEP.DamagePrimary = 23
 SWEP.DamageSecondary = 10
 
-SWEP.setlh = false
+SWEP.BlockTier = 2
+SWEP.BlockMaterial = "metal"
+SWEP.BlockSound = {"physics/metal/metal_sheet_impact_hard2.wav", 85, {145, 155}}
+
+
+SWEP.setlh = true
 SWEP.setrh = true
 SWEP.TwoHanded = false
 
@@ -41,7 +79,7 @@ SWEP.AttackingPos = Vector(0,0,0)
 SWEP.weaponPos = Vector(-3.5,0,0)
 SWEP.weaponAng = Angle(90,180,0)
 
-SWEP.HoldType = "knife"
+SWEP.HoldType = "revolver"
 
 --SWEP.InstantPainMul = 0.25
 
@@ -52,12 +90,23 @@ if CLIENT then
 	SWEP.BounceWeaponIcon = false
 end
 
-SWEP.BreakBoneMul = 0.5
-SWEP.ImmobilizationMul = 0.45
+SWEP.BreakBoneMul = 0.25
 SWEP.StaminaMul = 0.5
 SWEP.HadBackBonus = true
 
 SWEP.attack_ang = Angle(0,0,0)
+
+function SWEP:GetSelfHarmCutLocal(ent)
+    local boneName = "ValveBiped.Bip01_L_Forearm"
+    local bone = ent:LookupBone(boneName)
+    if not bone then return end
+
+    local bonePos = ent:GetBonePosition(bone)
+    if not bonePos then return end
+
+    return self.SelfHarmCutLocalPos, self.SelfHarmCutLocalAng, boneName
+end
+
 function SWEP:Initialize()
     self.attackanim = 0
     self.sprintanim = 0
@@ -72,12 +121,26 @@ function SWEP:Initialize()
     self:InitAdd()
 end
 
-SWEP.AttackTime = 0.01
-SWEP.AnimTime1 = 0.8
-SWEP.WaitTime1 = 0.6
+SWEP.swingsoundextra = {
+    {"knife/knife_bayonet_swing1.ogg", 60, {80, 90}},
+    {"knife/knife_bayonet_swing2.ogg", 60, {80, 90}},
+}
 
-SWEP.AnimTime2 = 1
-SWEP.WaitTime2 = 0.4
+SWEP.hitsoundextra = {
+    {"knife/KnifeStabIn-1.wav", 55, {105, 115}},
+    {"knife/KnifeStabIn-2.wav", 55, {105, 115}},
+    {"knife/KnifeStabIn-3.wav", 55, {105, 115}},
+}
+
+SWEP.AttackTime = 0.2
+SWEP.AnimTime1 = 1
+SWEP.WaitTime1 = 0.76
+
+SWEP.AnimTime2 = 0.85
+SWEP.Attack2Time = 0.15
+SWEP.WaitTime2 = 0.56
+
+SWEP.Attack2HitFlesh = "knife/NEWRapierSlash1.wav"
 
 SWEP.AnimList = {
     ["idle"] = "idle",
@@ -85,6 +148,12 @@ SWEP.AnimList = {
     ["attack"] = "stab_miss",
     ["attack2"] = "midslash1",
 }
+
+SWEP.LHIKLerpSpeed = 0.1
+SWEP.LHIKBlockPos = Vector(-10, 1 , 10)
+SWEP.LHIKBlockAng = Angle(65,155,-245)
+SWEP.LHIKSuicidePos = Vector(-4, 1 , 14)
+SWEP.LHIKSuicideAng = Angle(75,155,-245)
 
 function SWEP:Reload()
     if SERVER then
@@ -119,17 +188,120 @@ function SWEP:CustomBlockAnim(addPosLerp, addAngLerp)
 end
 
 function SWEP:CanSecondaryAttack()
-    return self.allowsec and true or false
+    if not self.allowsec then return false end
+    self.Attack2HitFlesh = "knife/NEWRapierSlash"..math.random(1, 6)..".wav"
+    return true
 end
 
-SWEP.AttackTimeLength = 0.15
+SWEP.AttackTimeLength = 0.16
 SWEP.Attack2TimeLength = 0.1
 
 SWEP.AttackRads = 35
 SWEP.AttackRads2 = 45
+SWEP.CantClash = true
+SWEP.noreverse = true
+
+SWEP.ArteryChance = 100
 
 SWEP.SwingAng = -90
 SWEP.SwingAng2 = 0
 
 SWEP.MultiDmg1 = false
 SWEP.MultiDmg2 = true
+
+function SWEP:GetLHIKStateOffset()
+    local owner = self:GetOwner()
+    if not IsValid(owner) then return vector_origin, angle_zero end
+    if self.Canselfharm and self:IsSelfHarming() then
+        return self.SelfHarmLeftPos or self.LHIKSelfHarmPos or vector_origin, self.SelfHarmLeftAng or self.LHIKSelfHarmAng or angle_zero
+    end
+    if self.CanSuicide and owner.suiciding then
+        return self.LHIKSuicidePos or vector_origin, self.LHIKSuicideAng or angle_zero
+    end
+    if self.GetBlocking and self:GetBlocking() then
+        return self.LHIKBlockPos or vector_origin, self.LHIKBlockAng or angle_zero
+    end
+    return vector_origin, angle_zero
+end
+
+if CLIENT then
+    function SWEP:ModelAnim(model)
+        local pos, ang = self.BaseClass.ModelAnim(self, model)
+        local isCutting = self.Canselfharm and self:IsSelfHarming() and self.SelfHarmStart and self.SelfHarmStart + self.SelfHarmTime > CurTime()
+        local cutTarget = 0
+
+        if isCutting then
+            local t = math.Clamp((CurTime() - self.SelfHarmStart) / self.SelfHarmTime, 0, 1)
+            cutTarget = t < 0.5 and math.ease.OutQuad(t * 2) or 1 - math.ease.InQuad((t - 0.5) * 2)
+        end
+
+        self.SelfHarmCutLerp = Lerp(math.min(FrameTime() * 8, 1), self.SelfHarmCutLerp or 0, cutTarget)
+
+        if self.SelfHarmCutLerp > 0.001 then
+            local cutPos = (self.SelfHarmCutVec or vector_origin) * self.SelfHarmCutLerp
+            local cutAng = (self.SelfHarmCutAng or angle_zero) * self.SelfHarmCutLerp
+            local shakePos, shakeAng = vector_origin, angle_zero
+            if isCutting then
+                shakePos, shakeAng = self:GetSelfHarmShake(self.SelfHarmCutLerp)
+            end
+            pos, ang = LocalToWorld(cutPos + shakePos, cutAng + shakeAng, pos, ang)
+        end
+
+        return pos, ang
+    end
+end
+
+function SWEP:DrawPostWorldModel()
+    if not self.setlh then return end
+
+    local wm = self:GetWM()
+    if not IsValid(wm) then return end
+
+    local isCutting = self.Canselfharm and self:IsSelfHarming() and self.SelfHarmStart and self.SelfHarmStart + self.SelfHarmTime > CurTime()
+    local offsetPos, offsetAng
+
+    if isCutting then
+        offsetPos = self.SelfHarmCutLeftPos or self.SelfHarmLeftPos or self.LHIKSelfHarmPos or vector_origin
+        offsetAng = self.SelfHarmCutLeftAng or self.SelfHarmLeftAng or self.LHIKSelfHarmAng or angle_zero
+        local t = math.Clamp((CurTime() - self.SelfHarmStart) / self.SelfHarmTime, 0, 1)
+        local curve = t < 0.5 and math.ease.OutQuad(t * 2) or 1 - math.ease.InQuad((t - 0.5) * 2)
+        local shakePos, shakeAng = self:GetSelfHarmShake(curve)
+        offsetPos = offsetPos + shakePos
+        offsetAng = offsetAng + shakeAng
+    else
+        offsetPos, offsetAng = self:GetLHIKStateOffset()
+    end
+
+    local lerpSpeed = self.LHIKLerpSpeed or 0.15
+    self.LHIKLerpedPos = LerpFT(lerpSpeed, self.LHIKLerpedPos or Vector(), offsetPos)
+    self.LHIKLerpedAng = LerpFT(lerpSpeed, self.LHIKLerpedAng or Angle(), offsetAng)
+    offsetPos = self.LHIKLerpedPos or vector_origin
+    offsetAng = self.LHIKLerpedAng or angle_zero
+
+    if offsetPos:LengthSqr() <= 0.0001 and math.abs(offsetAng.p) <= 0.001 and math.abs(offsetAng.y) <= 0.001 and math.abs(offsetAng.r) <= 0.001 then return end
+
+    local handBone = wm:LookupBone("ValveBiped.Bip01_L_Hand")
+    if not handBone then return end
+
+    local handMatrix = wm:GetBoneMatrix(handBone)
+    if not handMatrix then return end
+
+    local basePos = handMatrix:GetTranslation()
+    local baseAng = handMatrix:GetAngles()
+    local movedPos, movedAng = LocalToWorld(offsetPos, offsetAng, basePos, baseAng)
+
+    for _, boneName in ipairs(hg.TPIKBonesLH or {}) do
+        local boneIndex = wm:LookupBone(boneName)
+        if not boneIndex then continue end
+
+        local boneMatrix = wm:GetBoneMatrix(boneIndex)
+        if not boneMatrix then continue end
+
+        local relPos, relAng = WorldToLocal(boneMatrix:GetTranslation(), boneMatrix:GetAngles(), basePos, baseAng)
+        local newPos, newAng = LocalToWorld(relPos, relAng, movedPos, movedAng)
+
+        boneMatrix:SetTranslation(newPos)
+        boneMatrix:SetAngles(newAng)
+        wm:SetBoneMatrix(boneIndex, boneMatrix)
+    end
+end

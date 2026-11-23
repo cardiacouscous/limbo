@@ -440,6 +440,7 @@ local VirtualItems = {
         if ent:GetPos():Distance(ply:GetPos()) > 125 then return end
 
         Take(ply, ent, key)
+        hook.Run("Limbo_TookItem", ply, ent, tab, key) -- Limbo: for looting achievements
 
         ply:SetNetVar("Inventory", ply.inventory)
         ent:SetNetVar("Inventory", ent.inventory)
