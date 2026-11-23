@@ -483,6 +483,7 @@ end
 
 local function applyPosture(rag, posture)
 	if not IsValid(rag) then return end
+	if rag.headexploded then return end -- Limbo: no head, no posture
 
 	local data = hg.brainfuckv2.postures[posture]
 	if not data then return end

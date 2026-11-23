@@ -151,7 +151,6 @@ hg.settings:AddOpt("Blood","hg_blood_fps", "Blood FPS")
 hg.settings:AddOpt("Blood","hg_blood_sprites", "Blood Sprites (DISABLED FOR EVERYONE)")
 hg.settings:AddOpt("Blood","hg_old_blood", "Old blood")
 
-hg.settings.tbl["UI"]["hg_font"] = nil
 
 hg.settings:AddOpt("Weapons","hg_weaponshotblur_enable", "Shooting Blur")
 hg.settings:AddOpt("Weapons","hg_dynamic_mags", "Dynamic Ammo Inspect")

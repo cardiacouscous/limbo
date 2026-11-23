@@ -78,15 +78,44 @@ else
 		surface.PlaySound(SOUND)
 	end)
 
-	local alpha = 0
+	local fade, keyFade = 0, 0
+
+	-- letters spaced out by hand
+	local function DrawSpaced(text, font, x, y, spacing, col)
+		surface.SetFont(font)
+		local total = 0
+		local widths = {}
+		for i = 1, #text do
+			local w = surface.GetTextSize(text:sub(i, i))
+			widths[i] = w
+			total = total + w + (i < #text and spacing or 0)
+		end
+		local cx = x - total / 2
+		for i = 1, #text do
+			draw.SimpleText(text:sub(i, i), font, cx, y, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			cx = cx + widths[i] + spacing
+		end
+	end
+
 	hook.Add("DrawOverlay", "limbo_wakeup", function()
 		local ply = LocalPlayer()
 		local want = IsValid(ply) and ply:Alive() and ply:GetNWBool(NW)
-		alpha = math.Approach(alpha, want and 255 or 0, FrameTime() * (want and 120 or 600))
-		if alpha <= 0 then return end
+
+		-- slow in (about 4 seconds), quick out
+		fade = math.Approach(fade, want and 1 or 0, FrameTime() * (want and 0.25 or 3))
+		keyFade = math.Approach(keyFade, (want and fade >= 1) and 1 or 0, FrameTime() * (want and 0.5 or 3))
+		if fade <= 0 then return end
+
+		local eased = fade * fade * (3 - 2 * fade)
+		local breathe = 0.85 + 0.15 * math.sin(CurTime() * 1.3)
+		local a = 255 * eased * breathe
 
 		local cx, cy = ScrW() * 0.5, ScrH() * 0.5
-		draw.SimpleText("wake up", "Limbo_Wake", cx, cy, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-		draw.SimpleText("[E]", "Limbo_WakeKey", cx, cy + ScreenScale(4), Color(255, 255, 255, alpha * 0.7), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		local drift = (1 - eased) * ScreenScale(4)
+		DrawSpaced("wake up", "Limbo_Wake", cx, cy + drift, ScreenScale(2 + (1 - eased) * 4), Color(235, 235, 235, a))
+
+		if keyFade > 0 then
+			draw.SimpleText("[E]", "Limbo_WakeKey", cx, cy + ScreenScale(6), Color(224, 180, 60, 200 * keyFade * breathe), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		end
 	end)
 end
