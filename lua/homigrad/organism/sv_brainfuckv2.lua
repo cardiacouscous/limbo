@@ -36,13 +36,15 @@ for i = 1, #disabledHooks do
 	hook.Remove(hookData[1], hookData[2])
 end
 
-hg.applyFencingToPlayer = nil
-hg.applyDecorticateToPlayer = nil
-hg.applyLazarusToPlayer = nil
-hg.applyCushingToPlayer = nil
-hg.applySeizurePostureToRagdoll = nil
-hg.getRandomSpasm = nil
-hg.applySpasm = nil
+-- Limbo: Z-City still calls some of these on head and neck hits; the new postures handle it, so they do nothing
+local function noop() end
+hg.applyFencingToPlayer = noop
+hg.applyDecorticateToPlayer = noop
+hg.applyLazarusToPlayer = noop
+hg.applyCushingToPlayer = noop
+hg.applySeizurePostureToRagdoll = noop
+hg.getRandomSpasm = function() return "rigor" end
+hg.applySpasm = noop
 end
 hg.brainfuckv2 = {
 	postures = {

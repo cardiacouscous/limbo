@@ -8,7 +8,7 @@ local menu_music_appearance_paths = { -- one is picked each time the appearance 
     "sound/limbo/music/appearance3.mp3",
 }
 local menu_music_flags = "noblock noplay"
-local menu_music_volume = 0.25
+local menu_music_volume = 0.6
 local menu_music_fade_speed = 1.8
 local menu_music_station
 local menu_music_station_path
@@ -448,7 +448,7 @@ function PANEL:Think()
             self.NextFootstep = CurTime() + 0.38
             local vol = 1 - walkFrac
             if LocalPlayer and IsValid(LocalPlayer()) then
-                LocalPlayer():EmitSound("player/footsteps/concrete" .. math.random(1,4) .. ".wav", 0, 100, vol)
+                LocalPlayer():EmitSound("limbo/footsteps/concrete" .. math.random(1,4) .. ".wav", 0, 100, math.min(1, 0.35 + vol), CHAN_STATIC)
             end
         end
     end
@@ -943,8 +943,8 @@ function PANEL:Init()
     local lDock = self.lDock
     lDock:Dock(LEFT)
     lDock:SetSize(ScrW() / 3, ScrH())
-    lDock:DockMargin(0, MenuUnit(90), MenuUnit(10), MenuUnit(90))
-    self.lDockBaseMargins = {0, MenuUnit(90), MenuUnit(10), MenuUnit(90)}
+    lDock:DockMargin(MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(90))
+    self.lDockBaseMargins = {MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(90)} -- Limbo: room so the mouse drift never pushes it off screen
     lDock.Paint = function(this, w, h)
         if hg.PluvTown.Active then
             surface.SetDrawColor(color_white)
@@ -962,7 +962,6 @@ function PANEL:Init()
         self:AddSelect(lDock, v.Title, v)
     end
 
-    local logoPanel = vgui.Create("DPanel", lDock)
     surface.CreateFont("Limbo_Logo", {font = "Anton", size = MenuUnit(120), weight = 400, antialias = true})
     local logoPanel = vgui.Create("DPanel", lDock)
     self.logoPanel = logoPanel
@@ -980,9 +979,9 @@ function PANEL:Init()
 
     local bottomDock = vgui.Create("DPanel", self)
     self.bottomDock = bottomDock
-    bottomDock:SetPos(ScreenScale(1), ScrH() - ScrH()/10)
+    bottomDock:SetPos(MenuUnit(30), ScrH() - ScrH()/10)
     bottomDock:SetSize(ScreenScale(190), ScreenScaleH(40))
-    self.bottomDockBasePos = {ScreenScale(1), ScrH() - ScrH()/10}
+    self.bottomDockBasePos = {MenuUnit(30), ScrH() - ScrH()/10}
     bottomDock.Paint = function(this, w, h) end
     self.panelparrent = vgui.Create("DPanel", self)
     self.panelparrent:SetPos(0, 0)
