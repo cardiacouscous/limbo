@@ -1,8 +1,12 @@
 local PANEL = {}
 local curent_panel 
 local red_select = Color(224,180,60) -- Limbo accent
-local menu_music_default_path = "sound/limbo/music/menu.mp3" -- Limbo: drop your own tracks here (silent until then)
-local menu_music_appearance_path = "sound/limbo/music/appearance.mp3"
+local menu_music_default_path = "sound/limbo/music/menu.mp3" -- Limbo: menu track (placeholder)
+local menu_music_appearance_paths = { -- one is picked each time the appearance screen opens
+    "sound/limbo/music/appearance1.mp3",
+    "sound/limbo/music/appearance2.mp3",
+    "sound/limbo/music/appearance3.mp3",
+}
 local menu_music_flags = "noblock noplay"
 local menu_music_volume = 0.25
 local menu_music_fade_speed = 1.8
@@ -18,6 +22,9 @@ DISCORD_URL = "https://discord.gg/475EmEdTgH"
 
 local SOUND_MENU_SELECT = "ui/rem_select.wav"
 local SOUND_MENU_HOVER = "ui/rem_hover.wav"
+local SOUND_MENU_OPEN = "ui/rem_flush.wav"   -- Limbo: ESC menu opens
+local SOUND_MENU_SWITCH = "ui/rem_tik.wav"   -- Limbo: moving to another screen
+local SOUND_MENU_BACK = "ui/rem_selectbad.wav" -- Limbo: closing the menu
 local SOUND_TYPEWRITER = "shitty/tap-resonant.wav"
 local SOUND_TYPEWRITER_LEVEL = 55
 local SOUND_TYPEWRITER_VOLUME = 0.25
@@ -127,21 +134,21 @@ end
 
 local function CreateMainMenuFonts()
     surface.CreateFont("ZCity_Menu_Tiny", {
-        font = "Arial Black",
+        font = "Arial",
         size = ScreenScale(7),
-        weight = 900
+        weight = 700
     })
 
     surface.CreateFont("ZCity_Menu_Small", {
-        font = "Arial Black",
+        font = "Anton",
         size = ScreenScale(17),
-        weight = 900
+        weight = 400
     })
 end
 
 hook.Add("OnScreenSizeChanged", "ZCity_MainMenu_Fonts", CreateMainMenuFonts)
 local function LimboWallFont()
-    surface.CreateFont("Limbo_Wall", {font = "Arial Black", size = ScreenScale(48), weight = 900, antialias = true})
+    surface.CreateFont("Limbo_Wall", {font = "Anton", size = ScreenScale(48), weight = 400, antialias = true})
 end
 LimboWallFont()
 hook.Add("OnScreenSizeChanged", "Limbo_WallFont", LimboWallFont)
@@ -183,9 +190,9 @@ local splasheh = {
 
 --print(string.upper('I wish you good health, Jason Statham'))
 surface.CreateFont("ZC_MM_Title", {
-    font = "Arial Black",
+    font = "Anton",
     size = ScreenScale(40),
-    weight = 800,
+    weight = 400,
     antialias = true
 })
 -- local Title = markup.Parse("error")
@@ -852,6 +859,7 @@ function PANEL:Init()
     self.DisconnectBackgroundAlpha = 255
     self.DisconnectBlackAlpha = 0
     self:UseDefaultMenuMusic()
+    surface.PlaySound(SOUND_MENU_OPEN)
 
     timer.Simple(0, function()
         if self.First then
@@ -883,7 +891,7 @@ function PANEL:Init()
     end
 
     local logoPanel = vgui.Create("DPanel", lDock)
-    surface.CreateFont("Limbo_Logo", {font = "Arial Black", size = MenuUnit(120), weight = 900, antialias = true})
+    surface.CreateFont("Limbo_Logo", {font = "Anton", size = MenuUnit(120), weight = 400, antialias = true})
     local logoPanel = vgui.Create("DPanel", lDock)
     self.logoPanel = logoPanel
     logoPanel:Dock(BOTTOM)
@@ -971,12 +979,16 @@ function PANEL:Paint(w,h)
     end
     if backgroundAlpha > 0 then
         surface.SetFont("Limbo_Wall")
-        local word = "again again again again again again again again"
+        local word = string.rep("again ", 12)
         local _, lh = surface.GetTextSize(word)
         local wall = Color(255, 255, 255, 9 * backgroundAlpha / 255)
+        local unit = surface.GetTextSize("again ")
+        local speeds = {6, -4, 9, -7, 5, -10, 8}
         local row = 0
         for y = -lh * 0.2, h, lh * 1.02 do
-            draw.SimpleText(word, "Limbo_Wall", (row % 2 == 1) and ScreenScale(60) or -ScreenScale(10), y, wall)
+            local speed = ScreenScale(speeds[row % #speeds + 1])
+            local x = ((CurTime() * speed + row * unit * 0.37) % unit) - unit
+            draw.SimpleText(word, "Limbo_Wall", x, y, wall)
             row = row + 1
         end
     end
@@ -1060,6 +1072,8 @@ function PANEL:AddSelect( pParent, strTitle, tbl )
     if tbl.CreatedFunc then tbl.CreatedFunc(btn, self, luaMenu) end
     btn.RColor = Color(225,225,225)
     btn.OpenTime = CurTime()
+    btn.EnterDelay = (#Selects - id) * 0.045 -- Limbo: top button first
+    btn:SetAlpha(0)
     btn.LineLerp = 0
     btn.HoverLerp = 0
     btn.HoverOffset = 0.5
@@ -1082,6 +1096,7 @@ function PANEL:AddSelect( pParent, strTitle, tbl )
         end
 
         luaMenu.SwitchingPanel = true
+        surface.PlaySound(SOUND_MENU_SWITCH)
         local oldPanel = luaMenu.panelparrent
         local function openPanel()
             if IsValid(luaMenu.panelparrent) then
@@ -1116,14 +1131,17 @@ function PANEL:AddSelect( pParent, strTitle, tbl )
         self.LineLerp = LerpFT(0.2, self.LineLerp or 0, isHovered and 1 or 0)
         local mouseX, mouseY = luaMenu:GetLiveOffset(MenuUnit(menu_live.button_drift_x), MenuUnit(menu_live.button_drift_y))
         local shakeX, shakeY = luaMenu:GetLiveShake(id * 0.91, id * 1.27, MenuUnit(menu_live.button_shake_x), MenuUnit(menu_live.button_shake_y))
+        local enter = math.Clamp((CurTime() - self.OpenTime - self.EnterDelay) / 0.35, 0, 1)
+        enter = 1 - (1 - enter) ^ 3
+        self:SetAlpha(255 * enter)
         self:DockMargin(
-            math.Round(MenuUnit(15) + mouseX * 0.3 + shakeX + self.HoverLerp * (self.HoverOffset or MenuUnit(2))),
+            math.Round(MenuUnit(15) + mouseX * 0.3 + shakeX + self.HoverLerp * MenuUnit(4) - (1 - enter) * MenuUnit(140)),
             math.Round(MenuUnit(2) + mouseY * 0.1 + shakeY),
             0,
             0
         )
 
-        local elapsed = CurTime() - self.OpenTime
+        local elapsed = math.max(0, CurTime() - self.OpenTime - self.EnterDelay)
         local charsToShow = math.floor(elapsed * 15)
         local targetText = (curent_panel == string.lower(strTitle) and strTitle ~= 'Traitor Role') and '[ '..strTitle..' ]' or strTitle
         local len = #targetText
@@ -1150,43 +1168,35 @@ function PANEL:AddSelect( pParent, strTitle, tbl )
         if self:GetText() ~= ntxt then
             self:SetText(ntxt)
             self:SizeToContents()
+            self:SetWide(self:GetWide() + MenuUnit(24)) -- room for the hover bar
         end
     end
 
     function btn:Paint(w, h)
-        local isHovered = self:IsHovered() or (IsValid(self:GetChild(0)) and self:GetChild(0):IsHovered()) or (IsValid(self:GetChild(0)) and IsValid(self:GetChild(0):GetChild(0)) and self:GetChild(0):GetChild(0):IsHovered())
-        local flash = isHovered and (0.5 + 0.5 * math.sin(CurTime() * 10)) or 0
-        
-        local textColor = self.RColor
-        local outlineColor = Color(0, 0, 0, 255)
-
-        if isHovered then
-            local v = flash * 255
-            textColor = Color(v, v, v, 255)
-            local inv = 255 - v
-            outlineColor = Color(inv, inv, inv, 255)
-        end
+        local hov = self.HoverLerp or 0
+        local base = self.RColor
+        local textColor = Color(Lerp(hov, base.r, 224), Lerp(hov, base.g, 180), Lerp(hov, base.b, 60), 255)
 
         surface.SetFont(self:GetFont())
         local tw, th = surface.GetTextSize(self:GetText())
-        local scale = 1 + (self.HoverLerp or 0) * menu_live.button_hover_scale
-        local matrix = Matrix()
-        matrix:Translate(Vector(0, h * (1 - scale) * 0.5, 0))
-        matrix:Scale(Vector(scale, scale, 1))
-        cam.PushModelMatrix(matrix)
-        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), 0, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, outlineColor)
+        local barW = math.max(2, MenuUnit(5))
+        local pad = MenuUnit(12) * hov
 
-        if self.LineLerp and self.LineLerp > 0.01 then
-            surface.SetDrawColor(255, 255, 255, 255 * self.LineLerp)
-            surface.DrawRect(0, h / 2 + th / 2, tw * self.LineLerp, math.max(1, MenuUnit(1)))
+        if hov > 0.01 then
+            surface.SetDrawColor(224, 180, 60, 255 * hov)
+            surface.DrawRect(0, h / 2 - th * 0.32, barW * hov, th * 0.64)
         end
-        cam.PopModelMatrix()
+
+        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), pad, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, Color(0, 0, 0, 200))
         return true
     end
 end
 
 function PANEL:Close()
     if self.DisconnectCutscene then return end
+    if self.Closing then return end
+    self.Closing = true
+    surface.PlaySound(SOUND_MENU_BACK)
     StopMainMenuMusic()
     if IsValid(self.previewModel) and IsValid(self.previewModel.Entity) then
         CleanupPreviewAccessories(self.previewModel.Entity)
@@ -1218,7 +1228,8 @@ function PANEL:UseDefaultMenuMusic()
 end
 
 function PANEL:UseAppearanceMenuMusic()
-    self:SetMenuMusic(menu_music_appearance_path)
+    if menu_music_target_path and string.find(menu_music_target_path, "appearance", 1, true) then return end
+    self:SetMenuMusic(menu_music_appearance_paths[math.random(#menu_music_appearance_paths)])
 end
 
 vgui.Register( "ZMainMenu", PANEL, "ZFrame")

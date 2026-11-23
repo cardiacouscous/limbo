@@ -71,8 +71,8 @@ if SERVER then
 		ply:SetNWBool(NW, false)
 	end)
 else
-	surface.CreateFont("Limbo_Wake", {font = "Arial Black", size = ScreenScale(30), weight = 900, antialias = true})
-	surface.CreateFont("Limbo_WakeKey", {font = "Arial Black", size = ScreenScale(12), weight = 900, antialias = true})
+	surface.CreateFont("Limbo_Wake", {font = "Anton", size = ScreenScale(30), weight = 400, antialias = true})
+	surface.CreateFont("Limbo_WakeKey", {font = "Anton", size = ScreenScale(12), weight = 400, antialias = true})
 
 	net.Receive("limbo_wokeup", function()
 		surface.PlaySound(SOUND)

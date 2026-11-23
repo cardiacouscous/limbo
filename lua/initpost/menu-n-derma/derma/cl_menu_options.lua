@@ -85,34 +85,34 @@ local function CreateSettingsFonts()
     local scale = math.min(ScrW(), ScrH()) / 1000
 
     surface.CreateFont("ZCity_Menu_Small", {
-        font = "Arial Black",
+        font = "Anton",
         size = ScreenScale(20),
-        weight = 200,
+        weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Tiny", {
-        font = "Arial Black",
+        font = "Arial",
         size = ScreenScale(8),
-        weight = 200,
+        weight = 700,
     })
     surface.CreateFont("ZCity_Menu_Settings_Medium", {
-        font = "Arial Black",
+        font = "Anton",
         size = math.max(16, math.floor(32 * scale)),
-        weight = 300,
+        weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Settings_Small", {
-        font = "Arial Black",
+        font = "Anton",
         size = math.max(14, math.floor(22 * scale)),
-        weight = 300,
+        weight = 400,
     })
     surface.CreateFont("ZCity_Menu_Settings_Tiny", {
-        font = "Arial Black",
+        font = "Arial",
         size = math.max(12, math.floor(16 * scale)),
-        weight = 300,
+        weight = 700,
     })
     surface.CreateFont("ZCity_Menu_Settings_Category", {
-        font = "Arial Black",
+        font = "Anton",
         size = ScreenScale(15),
-        weight = 100
+        weight = 400
     })
 end
 hook.Add("OnScreenSizeChanged", "ZCity_Settings_Fonts", CreateSettingsFonts)

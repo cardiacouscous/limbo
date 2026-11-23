@@ -17,7 +17,7 @@ local function MenuUnit(num)
 end
 
 local function AchievementFontName()
-    return "Arial Black"
+    return "Anton"
 end
 
 local function CreateAchievementFonts()
