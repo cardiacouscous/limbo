@@ -140,7 +140,7 @@ local function CreateMainMenuFonts()
     })
 
     surface.CreateFont("ZCity_Menu_Small", {
-        font = "Dokdo",
+        font = "Limbo Dokdo",
         size = ScreenScale(17),
         weight = 400
     })
@@ -148,7 +148,7 @@ end
 
 hook.Add("OnScreenSizeChanged", "ZCity_MainMenu_Fonts", CreateMainMenuFonts)
 local function LimboWallFont()
-    surface.CreateFont("Limbo_Wall", {font = "Dokdo", size = ScreenScale(48), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_Wall", {font = "Limbo Dokdo", size = ScreenScale(48), weight = 400, antialias = true})
 end
 LimboWallFont()
 hook.Add("OnScreenSizeChanged", "Limbo_WallFont", LimboWallFont)
@@ -190,7 +190,7 @@ local splasheh = {
 
 --print(string.upper('I wish you good health, Jason Statham'))
 surface.CreateFont("ZC_MM_Title", {
-    font = "Dokdo",
+    font = "Limbo Dokdo",
     size = ScreenScale(40),
     weight = 400,
     antialias = true

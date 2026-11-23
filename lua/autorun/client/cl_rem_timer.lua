@@ -26,25 +26,25 @@ local SND_FINISH  = "ambient/alarms/warningbell1.wav" -- end
 local SND_CANCEL  = "keljoy/goodbye.mp3"       --deceased
 local gradient_d = surface.GetTextureID("vgui/gradient-d")
 surface.CreateFont("RemTimer_Digits", {
-	font = "Dokdo",
+	font = "Limbo Dokdo",
 	size = 54,
 	weight = 400,
 	antialias = true,
 })
 surface.CreateFont("RemTimer_Reason", {
-	font = "Dokdo",
+	font = "Limbo Dokdo",
 	size = 27,
 	weight = 400,
 	antialias = true,
 })
 surface.CreateFont("RemTimer_Label", {
-	font = "Dokdo",
+	font = "Limbo Dokdo",
 	size = 15,
 	weight = 400,
 	antialias = true,
 })
 surface.CreateFont("RemTimer_Cancel", {
-	font = "Dokdo",
+	font = "Limbo Dokdo",
 	size = 38,
 	weight = 400,
 	antialias = true,
