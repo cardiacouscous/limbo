@@ -277,6 +277,17 @@ local function MenuUnit(num)
     return math.floor(num * math.min(ScrW(), ScrH()) / 1000)
 end
 
+-- Limbo: layout like the ESC menu (name top left, categories like the menu buttons, choices in the middle, model on the right)
+local LIMBO_GOLD = Color(224, 180, 60)
+local function LimboAppearanceFonts()
+    surface.CreateFont("Limbo_AppName", {font = "Limbo Dokdo", size = MenuUnit(72), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_AppButton", {font = "Limbo Dokdo", size = MenuUnit(40), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_AppAction", {font = "Limbo Dokdo", size = MenuUnit(32), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_AppHint", {font = "Arial", size = MenuUnit(20), weight = 700, antialias = true})
+end
+LimboAppearanceFonts()
+hook.Add("OnScreenSizeChanged", "limbo_appearance_fonts", LimboAppearanceFonts)
+
 local gradient_d = surface.GetTextureID("vgui/gradient-d")
 local gradient_l = surface.GetTextureID("vgui/gradient-l")
 local gradient_r = surface.GetTextureID("vgui/gradient-r")
@@ -360,18 +371,17 @@ local function AppearanceValueEqual(a, b)
     return a == b
 end
 
-local function CreateAppearanceTextButton(pParent, strTitle, fnClick, fnIsActive)
+local function CreateAppearanceTextButton(pParent, strTitle, fnClick, fnIsActive, strFont)
     local btn = vgui.Create("DLabel", pParent)
     btn:SetText(string.rep("#", #strTitle))
     btn:SetMouseInputEnabled(true)
+    btn:SetFont(strFont or "Limbo_AppButton")
     btn:SizeToContents()
-    btn:SetFont("ZCity_Menu_Settings_Small")
-    btn:SetTall(MenuUnit(42))
+    btn:SetTall(strFont and MenuUnit(38) or MenuUnit(48))
     btn:Dock(TOP)
-    btn:DockMargin(MenuUnit(15), MenuUnit(2), 0, 0)
-    btn.RColor = Color(225,225,225)
+    btn:DockMargin(MenuUnit(30), 0, 0, 0)
+    btn.RColor = Color(235,235,235)
     btn.OpenTime = CurTime()
-    btn.LineLerp = 0
     btn.HoverLerp = 0
 
     function btn:DoClick()
@@ -383,52 +393,33 @@ local function CreateAppearanceTextButton(pParent, strTitle, fnClick, fnIsActive
     function btn:Think()
         local isHovered = self:IsHovered()
         local isActive = fnIsActive and fnIsActive() or false
-        self.HoverLerp = LerpFT(0.2, self.HoverLerp or 0, isHovered and 1 or 0)
-        self.LineLerp = LerpFT(0.2, self.LineLerp or 0, (isHovered or isActive) and 1 or 0)
+        self.HoverLerp = LerpFT(0.2, self.HoverLerp or 0, (isHovered or isActive) and 1 or 0)
         local elapsed = CurTime() - self.OpenTime
         local charsToShow = math.floor(elapsed * 15)
-        local targetText = isActive and ("[ " .. strTitle .. " ]") or strTitle
-        local len = #targetText
+        local len = #strTitle
         if charsToShow > len then charsToShow = len end
-        local ntxt = ""
-        for i = 1, len do
-            if i <= charsToShow then
-                ntxt = ntxt .. targetText:sub(i, i)
-            else
-                ntxt = ntxt .. "#"
-            end
-        end
+        local ntxt = strTitle:sub(1, charsToShow) .. string.rep("#", len - charsToShow)
         if self:GetText() ~= ntxt then
-            surface.PlaySound("shitty/tap-resonant.wav")
+            surface.PlaySound("ui/rem_hover.wav")
             self:SetText(ntxt)
             self:SizeToContents()
+            self:SetWide(self:GetWide() + MenuUnit(24))
         end
+        if isHovered and not self.WasHovered then surface.PlaySound("ui/rem_hover.wav") end
+        self.WasHovered = isHovered
     end
 
     function btn:Paint(w, h)
-        local isHovered = self:IsHovered()
-        local flash = isHovered and (0.5 + 0.5 * math.sin(CurTime() * 10)) or 0
-        local textColor = self.RColor
-        local outlineColor = Color(0, 0, 0, 255)
-        if isHovered then
-            local v = flash * 255
-            textColor = Color(v, v, v, 255)
-            local inv = 255 - v
-            outlineColor = Color(inv, inv, inv, 255)
-        end
+        local hov = self.HoverLerp or 0
+        local base = self.RColor
+        local col = Color(Lerp(hov, base.r, LIMBO_GOLD.r), Lerp(hov, base.g, LIMBO_GOLD.g), Lerp(hov, base.b, LIMBO_GOLD.b), 255)
         surface.SetFont(self:GetFont())
-        local tw, th = surface.GetTextSize(self:GetText())
-        local scale = 1 + (self.HoverLerp or 0) * (self.HoverScale or 0.02)
-        local matrix = Matrix()
-        matrix:Translate(Vector(0, h * (1 - scale) * 0.5, 0))
-        matrix:Scale(Vector(scale, scale, 1))
-        cam.PushModelMatrix(matrix)
-        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), 0, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, outlineColor)
-        if self.LineLerp and self.LineLerp > 0.01 then
-            surface.SetDrawColor(255, 255, 255, 255 * self.LineLerp)
-            surface.DrawRect(0, h / 2 + th / 2, tw * self.LineLerp, math.max(1, MenuUnit(1)))
+        local _, th = surface.GetTextSize(self:GetText())
+        if hov > 0.01 then
+            surface.SetDrawColor(LIMBO_GOLD.r, LIMBO_GOLD.g, LIMBO_GOLD.b, 255 * hov)
+            surface.DrawRect(0, h / 2 - th * 0.3, math.max(2, MenuUnit(5)) * hov, th * 0.6)
         end
-        cam.PopModelMatrix()
+        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), MenuUnit(12) * hov, h / 2, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, math.max(2, MenuUnit(2)), color_black)
         return true
     end
 
@@ -454,6 +445,19 @@ end
 function PANEL:Paint(w,h)
     if hg.DrawBlur then hg.DrawBlur(self, 5) end
     draw.RoundedBox(0, 0, 0, w, h, appearance_clr_verygray)
+    -- Limbo: the same drifting "again" wall as the ESC menu
+    surface.SetFont("Limbo_Wall")
+    local unit, lh = surface.GetTextSize("again ")
+    if unit and unit > 0 then
+        local word = string.rep("again ", 12)
+        local speeds = {6, -4, 9, -7, 5, -10, 8}
+        local row = 0
+        for y = -lh * 0.2, h, lh * 1.02 do
+            local x = ((CurTime() * ScreenScale(speeds[row % #speeds + 1]) + row * unit * 0.37) % unit) - unit
+            draw.SimpleText(word, "Limbo_Wall", x, y, Color(255, 255, 255, 6))
+            row = row + 1
+        end
+    end
     surface.SetDrawColor(appearance_gradient_right)
     surface.SetTexture(gradient_r)
     surface.DrawTexturedRect(0,0,w,h)
@@ -590,7 +594,7 @@ function PANEL:PostInit()
     self.PreviewRotated = false
     self.ActiveSection = "Model"
     self.SelectorOpenLerp = 0
-    self.PreviewSelectorShiftX = MenuUnit(appearance_preview_selector_shift_x)
+    self.PreviewSelectorShiftX = 0 -- Limbo: the model stays put on the right
 
     local nameEntry
     local previewNameLabel
@@ -1177,20 +1181,13 @@ function PANEL:PostInit()
         end
         this:SetPos(math.Round(nextX), y)
     end
-    sidebar.Paint = function(this, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(10, 10, 15, 120))
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 90)
-        surface.DrawRect(w - MenuUnit(1), 0, MenuUnit(1), h)
-    end
+    sidebar.Paint = function() end
 
     local sidebarHeader = vgui.Create("DPanel", sidebar)
     sidebarHeader:Dock(TOP)
-    sidebarHeader:SetTall(MenuUnit(appearance_header_height))
-    sidebarHeader.Paint = function(this, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 20, 120))
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 140)
-        surface.DrawRect(0, h - MenuUnit(1), w, MenuUnit(1))
-    end
+    sidebarHeader:SetTall(MenuUnit(190))
+    sidebarHeader:DockMargin(0, 0, 0, MenuUnit(10))
+    sidebarHeader.Paint = function() end
 
     local sidebarHeaderTitle = vgui.Create("DLabel", sidebarHeader)
     sidebarHeaderTitle:SetPos(MenuUnit(15), MenuUnit(18))
@@ -1198,6 +1195,7 @@ function PANEL:PostInit()
     sidebarHeaderTitle:SetTextColor(appearance_color_white)
     sidebarHeaderTitle:SetText("APPEARANCE")
     sidebarHeaderTitle:SizeToContents()
+    sidebarHeaderTitle:SetVisible(false) -- Limbo: the name is the title here
     sidebarHeaderTitle.OpenTime = CurTime()
     function sidebarHeaderTitle:Think()
         local elapsed = CurTime() - (self.OpenTime or CurTime())
@@ -1234,18 +1232,23 @@ function PANEL:PostInit()
         this:SetPos(math.Round(nextX), y)
     end
     mainPanel.Paint = function() end
-    self.AppearancePreviewX = sidebarWidth + MenuUnit(appearance_preview_shift_x)
-    self.AppearancePreviewY = MenuUnit(appearance_preview_shift_y)
+    -- Limbo: the model stays where it stands on the ESC menu (on the right)
+    self.AppearancePreviewX = nil
+    self.AppearancePreviewY = nil
+    self:SyncSharedPreview()
+    if self.SharedPreviewHolderOriginal then
+        self.AppearancePreviewX = self.SharedPreviewHolderOriginal.x
+        self.AppearancePreviewY = self.SharedPreviewHolderOriginal.y
+    else
+        self.AppearancePreviewX = sizeX - MenuUnit(420)
+        self.AppearancePreviewY = MenuUnit(appearance_preview_shift_y)
+    end
     self:SyncSharedPreview()
 
     local header = vgui.Create("DPanel", mainPanel)
     header:Dock(TOP)
     header:SetTall(MenuUnit(appearance_header_height))
-    header.Paint = function(this, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 20, 120))
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 140)
-        surface.DrawRect(0, h - MenuUnit(1), w, MenuUnit(1))
-    end
+    header:SetVisible(false) -- Limbo
 
     local headerTitle = vgui.Create("DLabel", header)
     headerTitle:SetPos(MenuUnit(25), MenuUnit(18))
@@ -1263,14 +1266,12 @@ function PANEL:PostInit()
 
     selectorPanel = vgui.Create("DPanel", mainPanel)
     selectorPanel:SetSize(MenuUnit(appearance_selector_width), mainPanel:GetTall())
-    selectorPanel.ClosedX = mainPanel:GetWide()
-    selectorPanel.OpenX = mainPanel:GetWide() - selectorPanel:GetWide()
+    selectorPanel.ClosedX = -selectorPanel:GetWide() - MenuUnit(20) -- Limbo: tucked behind the categories
+    selectorPanel.OpenX = MenuUnit(10)
     selectorPanel.TargetX = selectorPanel.ClosedX
     selectorPanel:SetPos(selectorPanel.ClosedX, 0)
     selectorPanel.Paint = function(this, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(10, 10, 15, 185))
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 90)
-        surface.DrawRect(0, 0, MenuUnit(1), h)
+        draw.RoundedBox(0, 0, MenuUnit(200), w, h - MenuUnit(200), Color(10, 10, 15, 150))
     end
     selectorPanel.Think = function(this)
         local x = this:GetX()
@@ -1281,13 +1282,7 @@ function PANEL:PostInit()
         end
         if not main.RestoringToMenu then
             main.SelectorOpenLerp = LerpFT(appearance_name_fade_speed, main.SelectorOpenLerp or 0, targetX == this.OpenX and 1 or 0)
-            if IsValid(previewNameLabel) then
-                previewNameLabel:SetAlpha(math.Round(255 * (1 - (main.SelectorOpenLerp or 0))))
-            end
-            if IsValid(nameEntry) then
-                nameEntry:SetAlpha(math.Round(255 * (1 - (main.SelectorOpenLerp or 0))))
-                nameEntry:SetMouseInputEnabled((main.SelectorOpenLerp or 0) < 0.05)
-            end
+
             if IsValid(main.SharedPreviewHolder) then
                 main.SharedPreviewHolder.TargetX = (main.AppearancePreviewX or main.SharedPreviewHolder.TargetX or main.SharedPreviewHolder:GetX()) - math.floor((main.PreviewSelectorShiftX or 0) * (main.SelectorOpenLerp or 0))
                 main.SharedPreviewHolder.TargetY = main.AppearancePreviewY or main.SharedPreviewHolder.TargetY or main.SharedPreviewHolder:GetY()
@@ -1299,16 +1294,16 @@ function PANEL:PostInit()
     local selectorHeader = vgui.Create("DPanel", selectorPanel)
     selectorHeader:Dock(TOP)
     selectorHeader:SetTall(MenuUnit(appearance_header_height))
+    selectorHeader:DockMargin(0, MenuUnit(130), 0, 0)
     selectorHeader.Paint = function(this, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 20, 130))
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 100)
-        surface.DrawRect(0, h - MenuUnit(1), w, MenuUnit(1))
+        surface.SetDrawColor(LIMBO_GOLD.r, LIMBO_GOLD.g, LIMBO_GOLD.b, 200)
+        surface.DrawRect(0, h - MenuUnit(2), w, MenuUnit(2))
     end
 
     selectorHeaderTitle = vgui.Create("DLabel", selectorHeader)
-    selectorHeaderTitle:SetPos(MenuUnit(18), MenuUnit(18))
-    selectorHeaderTitle:SetFont("ZCity_Menu_Settings_Small")
-    selectorHeaderTitle:SetTextColor(appearance_color_white)
+    selectorHeaderTitle:SetPos(MenuUnit(18), MenuUnit(6))
+    selectorHeaderTitle:SetFont("Limbo_AppButton")
+    selectorHeaderTitle:SetTextColor(LIMBO_GOLD)
     selectorHeaderTitle:SetText("")
     selectorHeaderTitle:SizeToContents()
 
@@ -1324,26 +1319,33 @@ function PANEL:PostInit()
     selectorContent:DockMargin(0, 0, 0, MenuUnit(8))
     selectorContent.Paint = function() end
 
-    previewNameLabel = vgui.Create("DLabel", mainPanel)
-    previewNameLabel:SetFont("ZCity_Menu_Settings_Tiny")
+    previewNameLabel = vgui.Create("DLabel", sidebarHeader)
+    previewNameLabel:SetFont("Limbo_AppHint")
     previewNameLabel:SetTextColor(appearance_color_text_dim)
-    previewNameLabel:SetText("NAME")
+    previewNameLabel:SetText("how you look  -  click the name to change it")
     previewNameLabel:SizeToContents()
-    previewNameLabel:SetPos(self.AppearancePreviewX - sidebarWidth, MenuUnit(86))
+    previewNameLabel:SetPos(MenuUnit(34), MenuUnit(150))
 
-    nameEntry = vgui.Create("DTextEntry", mainPanel)
-    nameEntry:SetSize(MenuUnit(appearance_name_width), MenuUnit(28))
-    nameEntry:SetPos(self.AppearancePreviewX - sidebarWidth - MenuUnit(8), MenuUnit(102))
-    nameEntry:SetFont("ZCity_Menu_Settings_Small")
+    nameEntry = vgui.Create("DTextEntry", sidebarHeader)
+    nameEntry:SetSize(sidebarWidth + MenuUnit(400), MenuUnit(90))
+    nameEntry:SetPos(MenuUnit(26), MenuUnit(60))
+    nameEntry:SetFont("Limbo_AppName")
     nameEntry:SetText(main.AppearanceTable.AName or "")
     nameEntry:SetUpdateOnType(true)
-    nameEntry:SetContentAlignment(5)
+    nameEntry:SetDrawLanguageID(false)
     nameEntry.Paint = function(this, w, h)
-        surface.SetDrawColor(20, 20, 20, 240)
-        surface.DrawRect(0, 0, w, h)
-        surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, 120)
-        surface.DrawOutlinedRect(0, 0, w, h, 1)
-        this:DrawTextEntryText(color_white, Color(120, 130, 180), color_white)
+        local focus = this:HasFocus()
+        if focus or this:IsHovered() then
+            surface.SetDrawColor(LIMBO_GOLD.r, LIMBO_GOLD.g, LIMBO_GOLD.b, focus and 220 or 90)
+            surface.DrawRect(MenuUnit(4), h - MenuUnit(10), w * 0.5, MenuUnit(2))
+        end
+        -- outline like the logo, then the text
+        local txt = this:GetText()
+        local o = math.max(2, MenuUnit(2))
+        for ox = -o, o, o do for oy = -o, o, o do
+            draw.SimpleText(txt, "Limbo_AppName", MenuUnit(4) + ox, h / 2 + oy, color_black, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end end
+        this:DrawTextEntryText(color_white, Color(224, 180, 60, 120), LIMBO_GOLD)
     end
     function nameEntry:OnValueChange(val)
         main.AppearanceTable.AName = val
@@ -1362,83 +1364,21 @@ function PANEL:PostInit()
     CreateAppearanceTextButton(sidebar, "Gloves", function() OpenGlovesMenu() end, function() return main.ActiveSection == "Gloves" end)
     CreateAppearanceTextButton(sidebar, "Facemap", function() OpenFacemapMenu() end, function() return main.ActiveSection == "Facemap" end)
 
-    local returnBtn = vgui.Create("DLabel", sidebar)
+    local returnBtn = CreateAppearanceTextButton(sidebar, "<- Return", function() TryExitAppearance() end, nil, "Limbo_AppAction")
     returnBtn:Dock(BOTTOM)
-    returnBtn:DockMargin(MenuUnit(15), MenuUnit(2), 0, MenuUnit(20))
-    returnBtn:SetFont("ZCity_Menu_Settings_Small")
-    returnBtn:SetTextColor(appearance_color_text)
-    returnBtn:SetText(string.rep("#", #"<- Return"))
-    returnBtn:SetMouseInputEnabled(true)
-    returnBtn:SizeToContents()
-    returnBtn:SetTall(MenuUnit(42))
-    returnBtn.OpenTime = CurTime()
-    returnBtn.HoverLerp = 0
-    returnBtn.LineLerp = 0
-    returnBtn.HoverScale = 0.008
-    function returnBtn:DoClick()
-        TryExitAppearance()
-    end
-    function returnBtn:Think()
-        local isHovered = self:IsHovered()
-        self.HoverLerp = LerpFT(0.2, self.HoverLerp or 0, isHovered and 1 or 0)
-        self.LineLerp = LerpFT(0.2, self.LineLerp or 0, isHovered and 1 or 0)
-        local elapsed = CurTime() - self.OpenTime
-        local charsToShow = math.floor(elapsed * 15)
-        local target = "<- Return"
-        local len = #target
-        if charsToShow > len then charsToShow = len end
-        local ntxt = ""
-        for i = 1, len do
-            if i <= charsToShow then
-                ntxt = ntxt .. target:sub(i, i)
-            else
-                ntxt = ntxt .. "#"
-            end
-        end
-        if self:GetText() ~= ntxt then
-            surface.PlaySound("shitty/tap-resonant.wav")
-            self:SetText(ntxt)
-            self:SizeToContents()
-        end
-    end
-    function returnBtn:Paint(w, h)
-        local isHovered = self:IsHovered()
-        local flash = isHovered and (0.5 + 0.5 * math.sin(CurTime() * 10)) or 0
-        local textColor = appearance_color_text
-        local outlineColor = Color(0, 0, 0, 255)
-        if isHovered then
-            local v = flash * 255
-            textColor = Color(v, v, v, 255)
-            local inv = 255 - v
-            outlineColor = Color(inv, inv, inv, 255)
-        end
-        surface.SetFont(self:GetFont())
-        local tw, th = surface.GetTextSize(self:GetText())
-        local scale = 1 + (self.HoverLerp or 0) * (self.HoverScale or 0.02)
-        local matrix = Matrix()
-        matrix:Translate(Vector(0, h * (1 - scale) * 0.5, 0))
-        matrix:Scale(Vector(scale, scale, 1))
-        cam.PushModelMatrix(matrix)
-        draw.SimpleTextOutlined(self:GetText(), self:GetFont(), 0, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER, 1, outlineColor)
-        if self.LineLerp and self.LineLerp > 0.01 then
-            surface.SetDrawColor(255, 255, 255, 255 * self.LineLerp)
-            surface.DrawRect(0, h / 2 + th / 2, tw * self.LineLerp, math.max(1, MenuUnit(1)))
-        end
-        cam.PopModelMatrix()
-        return true
-    end
+    returnBtn:DockMargin(MenuUnit(30), MenuUnit(10), 0, MenuUnit(30))
 
     local lowerActions = vgui.Create("DPanel", sidebar)
     lowerActions:Dock(BOTTOM)
     lowerActions:DockMargin(0, 0, 0, MenuUnit(2))
-    lowerActions:SetTall(MenuUnit(42) * 5 + MenuUnit(10))
+    lowerActions:SetTall(MenuUnit(38) * 5 + MenuUnit(10))
     lowerActions.Paint = function() end
 
-    local rotateBtn = CreateAppearanceTextButton(lowerActions, "Rotate", function() ToggleRotate() end, function() return main.ActiveSection == "Rotate" end)
-    local applyBtn = CreateAppearanceTextButton(lowerActions, "Apply", function() main.ActiveSection = "Apply" CloseSelectorPanel() ApplyAppearance() end, function() return main.ActiveSection == "Apply" end)
-    local savePresetBtn = CreateAppearanceTextButton(lowerActions, "Save Preset", function() main.ActiveSection = "Save Preset" CloseSelectorPanel() SaveCurrentPreset() end, function() return main.ActiveSection == "Save Preset" end)
-    local loadPresetBtn = CreateAppearanceTextButton(lowerActions, "Load Preset", function() main.ActiveSection = "Load Preset" CloseSelectorPanel() LoadCurrentPreset() end, function() return main.ActiveSection == "Load Preset" end)
-    local deletePresetBtn = CreateAppearanceTextButton(lowerActions, "Delete Preset", function() main.ActiveSection = "Delete Preset" CloseSelectorPanel() DeleteCurrentPreset() end, function() return main.ActiveSection == "Delete Preset" end)
+    local rotateBtn = CreateAppearanceTextButton(lowerActions, "Rotate", function() ToggleRotate() end, function() return main.ActiveSection == "Rotate" end, "Limbo_AppAction")
+    local applyBtn = CreateAppearanceTextButton(lowerActions, "Apply", function() main.ActiveSection = "Apply" CloseSelectorPanel() ApplyAppearance() end, function() return main.ActiveSection == "Apply" end, "Limbo_AppAction")
+    local savePresetBtn = CreateAppearanceTextButton(lowerActions, "Save Preset", function() main.ActiveSection = "Save Preset" CloseSelectorPanel() SaveCurrentPreset() end, function() return main.ActiveSection == "Save Preset" end, "Limbo_AppAction")
+    local loadPresetBtn = CreateAppearanceTextButton(lowerActions, "Load Preset", function() main.ActiveSection = "Load Preset" CloseSelectorPanel() LoadCurrentPreset() end, function() return main.ActiveSection == "Load Preset" end, "Limbo_AppAction")
+    local deletePresetBtn = CreateAppearanceTextButton(lowerActions, "Delete Preset", function() main.ActiveSection = "Delete Preset" CloseSelectorPanel() DeleteCurrentPreset() end, function() return main.ActiveSection == "Delete Preset" end, "Limbo_AppAction")
     rotateBtn.HoverScale = 0.008
     applyBtn.HoverScale = 0.008
     savePresetBtn.HoverScale = 0.008

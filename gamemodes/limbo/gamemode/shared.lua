@@ -1,4 +1,4 @@
-GM.Name = "ZCity"
+GM.Name = "Limbo"
 GM.Author = "uzelezz, sadsalat, Mr. Point, Zac90, Deka, Mannytko"
 GM.Email = "N/A"
 GM.Website = "N/A"

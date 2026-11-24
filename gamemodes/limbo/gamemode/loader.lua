@@ -29,7 +29,7 @@ local function LoadFromDir(directory)
 	end
 end
 
-LoadFromDir("zcity/gamemode/libraries")
+LoadFromDir("limbo/gamemode/libraries")
 
 zb.modesHooks = {}
 zb.modes = zb.modes or {}
@@ -133,7 +133,7 @@ if SERVER then
 end
 
 local function LoadModes()
-	local directory = "zcity/gamemode/modes"
+	local directory = "limbo/gamemode/modes"
 	local files, folders = file.Find(directory .. "/*", "LUA")
 
 	if SERVER then
