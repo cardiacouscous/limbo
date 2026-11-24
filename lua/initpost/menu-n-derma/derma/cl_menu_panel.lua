@@ -815,6 +815,23 @@ function PANEL:CreateAppearancePreview()
         end
 
         self.HeadYawLerp = LerpFT(0.1, self.HeadYawLerp or lookYaw, lookYaw)
+        -- Limbo: the more hurt you are, the more the character slumps (back bent forward, head lower)
+        local hurt = 0
+        local lp = LocalPlayer()
+        if IsValid(lp) and lp:Alive() then
+            local org = lp.organism
+            if org then
+                hurt = math.max(hurt, math.Clamp((5000 - (org.blood or 5000)) / 2000, 0, 1))
+                hurt = math.max(hurt, math.Clamp((org.pain or 0) / 70, 0, 1))
+                if (org.lleg or 0) >= 1 or (org.rleg or 0) >= 1 then hurt = math.max(hurt, 0.6) end
+            end
+            local maxHp = math.max(lp:GetMaxHealth(), 1)
+            hurt = math.max(hurt, math.Clamp(1 - lp:Health() / maxHp, 0, 1))
+        end
+        self.HurtLerp = LerpFT(0.05, self.HurtLerp or hurt, hurt)
+        ent:SetPoseParameter("aim_pitch", self.HurtLerp * 35)
+        lookPitch = lookPitch + self.HurtLerp * 18
+
         self.HeadPitchLerp = LerpFT(0.1, self.HeadPitchLerp or lookPitch, lookPitch)
         ent:SetPoseParameter("head_yaw", self.HeadYawLerp)
         ent:SetPoseParameter("head_pitch", self.HeadPitchLerp)
