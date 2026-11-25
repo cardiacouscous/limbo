@@ -173,6 +173,16 @@ if not game.IsDedicated() then
 	hg.settings:AddOpt("Limbo (server)","limbo_cleanup_time", "Minutes before something can be removed", nil, nil, "int")
 	hg.settings:AddOpt("Limbo (server)","limbo_cleanup_keeplast", "Keep each player's latest corpse and its gear")
 	hg.settings:AddOpt("Limbo (server)","limbo_cleanup_radius", "Never remove things this close to a living player (0 = off)", nil, nil, "int")
+	hg.settings:AddOpt("Limbo (server)","limbo_remorsehands", "Remorse hands (charge punch, shove)")
+	hg.settings:AddOpt("Limbo (server)","limbo_rem_torso", "Explosions can split bodies in half")
+	hg.settings:AddOpt("Limbo (server)","limbo_rem_headgib", "Remorse head gibbing (off = Z-City's)")
+
+	hg.settings:AddOpt("Sound","limbo_rem_gunsounds", "Remorse gun sounds (off = Z-City's)")
+	hg.settings:AddOpt("Sound","limbo_rem_bodysounds", "Remorse bone, blood and flesh sounds")
+	hg.settings:AddOpt("Sound","limbo_rem_explosions", "Remorse extra explosion sound")
+	hg.settings:AddOpt("Sound","limbo_footsteps", "Limbo footsteps (off = Z-City's)")
+	hg.settings:AddOpt("Sound","limbo_gearrattle", "Gear rattles when running")
+	hg.settings:AddOpt("Sound","limbo_paingrunts", "Pain grunts")
 end
 hg.settings:AddOpt("Sound","hg_quietshots", "Enable/Disable Quietshoot Sounds")
 

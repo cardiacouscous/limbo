@@ -953,8 +953,8 @@ function PANEL:Init()
     local lDock = self.lDock
     lDock:Dock(LEFT)
     lDock:SetSize(ScrW() / 3, ScrH())
-    lDock:DockMargin(MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(90))
-    self.lDockBaseMargins = {MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(90)} -- Limbo: room so the mouse drift never pushes it off screen
+    lDock:DockMargin(MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(160))
+    self.lDockBaseMargins = {MenuUnit(30), MenuUnit(90), MenuUnit(10), MenuUnit(160)} -- Limbo: room so the mouse drift never pushes it off screen
     lDock.Paint = function(this, w, h)
         if hg.PluvTown.Active then
             surface.SetDrawColor(color_white)
@@ -1030,6 +1030,11 @@ function PANEL:Init()
         -- Limbo: a thin line between the logo and the buttons
         surface.SetDrawColor(255, 255, 255, 45)
         surface.DrawRect(MenuUnit(12), h - MenuUnit(4), MenuUnit(330), math.max(1, MenuUnit(1)))
+
+        -- Limbo: what this is, right under the line
+        DisableClipping(true)
+        draw.SimpleText("made for sandbox", "Limbo_InfoLabel", MenuUnit(14), h + MenuUnit(4), Color(224, 180, 60, 235))
+        DisableClipping(false)
     end
 
 
@@ -1054,6 +1059,7 @@ function PANEL:Init()
     git:SetContentAlignment(4)
     git:SetMouseInputEnabled(true)
     git:SizeToContents()
+    bottomDock:SetWide(math.max(bottomDock:GetWide(), git:GetWide() + ScreenScale(14))) -- Limbo: room for the whole credits line
 
     function git:DoClick()
         gui.OpenURL("https://github.com/uzelezz123/Z-City")
@@ -1160,9 +1166,10 @@ function PANEL:DrawLimboInfo(w, h, mul)
     if IsValid(holder) and holder.TargetX then
         local x = holder.TargetX + MenuUnit(10)
         local y = math.min(holder.TargetY + holder:GetTall() - MenuUnit(30), h - MenuUnit(100))
-        local labelX, valueX = x, x + MenuUnit(110)
         surface.SetDrawColor(255, 255, 255, 45 * mul)
         surface.DrawRect(x, y, holder:GetWide() - MenuUnit(10), math.max(1, MenuUnit(1)))
+        -- Limbo: the two lines sit just left of the character, ending where it starts
+        local rightX = holder.TargetX - MenuUnit(6)
 
         local last = stats.lastDeath
         local lastText = last and (last.cause .. ", " .. Ago(last.time)) or "not yet"
@@ -1172,10 +1179,14 @@ function PANEL:DrawLimboInfo(w, h, mul)
 
         local gold = Color(224, 180, 60, 255 * mul)
         local grey = Color(200, 200, 205, 255 * mul)
-        draw.SimpleText("last death", "Limbo_InfoLabel", labelX, y + MenuUnit(10), gold)
-        draw.SimpleText(lastText, "ZCity_Menu_Tiny", valueX, y + MenuUnit(13), grey)
-        draw.SimpleText("this session", "Limbo_InfoLabel", labelX, y + MenuUnit(36), gold)
-        draw.SimpleText(sessionText, "ZCity_Menu_Tiny", valueX, y + MenuUnit(39), grey)
+        local function Row(label, value, ry)
+            surface.SetFont("ZCity_Menu_Tiny")
+            local vw = surface.GetTextSize(value)
+            draw.SimpleText(value, "ZCity_Menu_Tiny", rightX, ry + MenuUnit(3), grey, TEXT_ALIGN_RIGHT)
+            draw.SimpleText(label, "Limbo_InfoLabel", rightX - vw - MenuUnit(10), ry, gold, TEXT_ALIGN_RIGHT)
+        end
+        Row("last death", lastText, y + MenuUnit(10))
+        Row("this session", sessionText, y + MenuUnit(36))
     end
 
     self.LimboTip = self.LimboTip or limboTips[math.random(#limboTips)]

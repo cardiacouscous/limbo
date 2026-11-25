@@ -14,6 +14,9 @@ local FL = bit.bor(FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY)
 local cvGuns = CreateConVar("limbo_rem_gunsounds", "1", FL, "Remorse's gun sounds (0 = Z-City's)", 0, 1)
 local cvBody = CreateConVar("limbo_rem_bodysounds", "1", FL, "Remorse's bone, blood and flesh sounds (0 = Z-City's)", 0, 1)
 CreateConVar("limbo_rem_explosions", "1", FL, "Remorse's extra explosion layer (0 = off)", 0, 1)
+-- gore switches live here too so the Settings menu can see them
+CreateConVar("limbo_rem_torso", "1", FL, "Explosions can split bodies in half (0 = off)", 0, 1)
+CreateConVar("limbo_rem_headgib", "1", FL, "Remorse's head gibbing (0 = Z-City's)", 0, 1)
 
 LimboRem = LimboRem or {}
 function LimboRem.Body() return cvBody:GetBool() end
