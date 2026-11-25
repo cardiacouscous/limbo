@@ -1261,6 +1261,11 @@ function SWEP:CoreStep()
 		self:SetClip1(self:GetNWInt("Clip1", self:Clip1()))
 	end
 
+	-- [Limbo] tell reverb addons (Milsim Weapon Acoustics, Dynamic Weapon Reverb) when this gun is suppressed
+	local suppressed = (SERVER and self.Supressor or self:GetNWBool("Supressor")) and true or false
+	self.MWA_Suppressed = suppressed
+	self.dwr_customIsSuppressed = suppressed
+
 	--self:CanRest()
 
 	if SERVER then
