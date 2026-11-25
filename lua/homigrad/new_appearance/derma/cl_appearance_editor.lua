@@ -284,6 +284,7 @@ local function LimboAppearanceFonts()
     surface.CreateFont("Limbo_AppButton", {font = "Limbo Dokdo", size = MenuUnit(40), weight = 400, antialias = true})
     surface.CreateFont("Limbo_AppAction", {font = "Limbo Dokdo", size = MenuUnit(32), weight = 400, antialias = true})
     surface.CreateFont("Limbo_AppHint", {font = "Arial", size = MenuUnit(20), weight = 700, antialias = true})
+    surface.CreateFont("Limbo_AppItem", {font = "Arial", size = MenuUnit(22), weight = 700, antialias = true})
 end
 LimboAppearanceFonts()
 hook.Add("OnScreenSizeChanged", "limbo_appearance_fonts", LimboAppearanceFonts)
@@ -303,9 +304,11 @@ local appearance_preview_shift_x = 180
 local appearance_preview_shift_y = 140
 local appearance_name_width = 360
 local appearance_preview_move_time = 0.25
-local appearance_preview_fov = 15
-local appearance_preview_cam_pos = Vector(118, 0, 60)
-local appearance_preview_look_ang = Angle(11, 180, 0)
+-- Limbo: same framing as the ESC menu, so opening the editor doesn't jump the zoom;
+-- the character gets bigger by the holder growing instead
+local appearance_preview_fov = 18
+local appearance_preview_cam_pos = Vector(100, 0, 65)
+local appearance_preview_look_ang = Angle(15, 180, 0)
 local appearance_selector_width = 360
 local appearance_preview_selector_shift_x = 165
 local appearance_name_fade_speed = 0.18
@@ -533,7 +536,9 @@ function PANEL:RestoreSharedPreview()
         self.SharedPreviewHolder.AppearanceFollow = false
         self.SharedPreviewHolder.TargetX = self.SharedPreviewHolderOriginal.x
         self.SharedPreviewHolder.TargetY = self.SharedPreviewHolderOriginal.y
-        self.SharedPreviewHolder:SetSize(self.SharedPreviewHolderOriginal.w, self.SharedPreviewHolderOriginal.h)
+        self.SharedPreviewHolder.TargetW = nil
+        self.SharedPreviewHolder.TargetH = nil
+        self.SharedPreviewHolder:SizeTo(self.SharedPreviewHolderOriginal.w, self.SharedPreviewHolderOriginal.h, appearance_return_move_time, 0, 0)
         self.SharedPreviewHolder.ClosedY = self.SharedPreviewHolderOriginal.closedY
         self.SharedPreviewHolder:MoveTo(self.SharedPreviewHolderOriginal.x, self.SharedPreviewHolderOriginal.y, appearance_return_move_time, 0, 0, function()
             if IsValid(self.SharedPreviewHolder) then
@@ -615,7 +620,7 @@ function PANEL:PostInit()
         row:Dock(TOP)
         row:SetTall(MenuUnit(42))
         row:DockMargin(MenuUnit(12), MenuUnit(2), MenuUnit(12), 0)
-        row:SetFont("ZCity_Menu_Settings_Small")
+        row:SetFont("Limbo_AppItem")
         row:SetText("")
         row:SetMouseInputEnabled(true)
         row.Title = strTitle
@@ -684,7 +689,7 @@ function PANEL:PostInit()
             surface.DrawRect(0, 0, w, h)
             surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, self.IsActive and 180 or 90)
             surface.DrawOutlinedRect(0, 0, w, h, 1)
-            draw.SimpleText(self.Title, "ZCity_Menu_Settings_Small", MenuUnit(86), MenuUnit(18), appearance_color_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+            draw.SimpleText(self.Title, "Limbo_AppItem", MenuUnit(86), MenuUnit(18), appearance_color_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
             draw.SimpleText(strSubtitle or (self.IsActive and "Selected" or "Model"), "ZCity_Menu_Settings_Tiny", MenuUnit(86), MenuUnit(46), appearance_color_text_dim, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
         end
         local icon = vgui.Create("DModelPanel", row)
@@ -749,7 +754,7 @@ function PANEL:PostInit()
             surface.SetDrawColor(appearance_color_white.r, appearance_color_white.g, appearance_color_white.b, self.IsActive and 160 or 90)
             surface.DrawOutlinedRect(MenuUnit(8), MenuUnit(8), MenuUnit(68), MenuUnit(78), 1)
             draw.SimpleText("X", "ZCity_Menu_Settings_Medium", MenuUnit(42), MenuUnit(47), appearance_color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            draw.SimpleText("None", "ZCity_Menu_Settings_Small", MenuUnit(86), MenuUnit(18), appearance_color_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+            draw.SimpleText("None", "Limbo_AppItem", MenuUnit(86), MenuUnit(18), appearance_color_text, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
             draw.SimpleText(self.IsActive and "Clear slot" or "Clear slot", "ZCity_Menu_Settings_Tiny", MenuUnit(86), MenuUnit(46), appearance_color_text_dim, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
         end
         return row
@@ -763,18 +768,53 @@ function PANEL:PostInit()
             CloseSelectorPanel()
             return false
         end
+        local wasOpen = currentSelectorSection ~= nil and selectorPanel.TargetX == selectorPanel.OpenX
         currentSelectorSection = strSection
         main.ActiveSection = strSection
-        selectorContent:Clear()
-        selectorHeaderTitle:SetText(string.upper(strTitle))
-        selectorHeaderTitle:SizeToContents()
-        selectorHeaderHint:SetText(strHint or "")
-        selectorHeaderHint:SizeToContents()
-        local scroll = CreateStyledScrollPanel(selectorContent)
-        scroll:Dock(FILL)
-        scroll.Paint = function() end
-        if fnBuild then
-            fnBuild(scroll)
+
+        -- Limbo: build the new list, then let the gold line draw out and the rows slide in one after another
+        local function Build()
+            if not IsValid(selectorContent) then return end
+            selectorContent:Clear()
+            selectorContent:SetAlpha(255)
+            selectorHeaderTitle:SetText(string.upper(strTitle))
+            selectorHeaderTitle:SizeToContents()
+            selectorHeaderHint:SetText(strHint or "")
+            selectorHeaderHint:SizeToContents()
+            local scroll = CreateStyledScrollPanel(selectorContent)
+            scroll:Dock(FILL)
+            scroll.Paint = function() end
+            if fnBuild then
+                fnBuild(scroll)
+            end
+            selectorPanel.LineStart = SysTime()
+            local now = SysTime() + 0.08
+            for i, row in ipairs(scroll:GetCanvas():GetChildren()) do
+                row.LimboAppear = now + math.min(i - 1, 18) * 0.025
+                local paint = row.Paint
+                if not isfunction(paint) then continue end
+                row.Paint = function(this, w, h)
+                    local f = math.Clamp((SysTime() - (this.LimboAppear or 0)) / 0.18, 0, 1)
+                    if f >= 1 then return paint(this, w, h) end
+                    if f <= 0 then return true end
+                    local e = 1 - (1 - f) * (1 - f)
+                    local m = Matrix()
+                    m:Translate(Vector(-(1 - e) * MenuUnit(26), 0, 0))
+                    surface.SetAlphaMultiplier(e)
+                    cam.PushModelMatrix(m, true)
+                    local ret = paint(this, w, h)
+                    cam.PopModelMatrix()
+                    surface.SetAlphaMultiplier(1)
+                    return ret
+                end
+            end
+        end
+
+        if wasOpen then
+            -- switching categories: the old list fades out quickly first
+            selectorContent:AlphaTo(0, 0.08, 0, function() Build() end)
+        else
+            Build()
         end
         selectorPanel.TargetX = selectorPanel.OpenX
         return true
@@ -1232,13 +1272,19 @@ function PANEL:PostInit()
         this:SetPos(math.Round(nextX), y)
     end
     mainPanel.Paint = function() end
-    -- Limbo: the model stays where it stands on the ESC menu (on the right)
+    -- Limbo: the character glides from its ESC spot to the middle-right and grows,
+    -- staying clear of the item list on the left and the buttons along the right edge
     self.AppearancePreviewX = nil
     self.AppearancePreviewY = nil
     self:SyncSharedPreview()
-    if self.SharedPreviewHolderOriginal then
-        self.AppearancePreviewX = self.SharedPreviewHolderOriginal.x
-        self.AppearancePreviewY = self.SharedPreviewHolderOriginal.y
+    if self.SharedPreviewHolderOriginal and IsValid(self.SharedPreviewHolder) then
+        local o = self.SharedPreviewHolderOriginal
+        local hh = math.floor(ScrH() * 0.86)
+        local hw = math.floor(hh * o.w / math.max(o.h, 1))
+        self.AppearancePreviewX = math.floor(ScrW() * 0.66 - hw * 0.5)
+        self.AppearancePreviewY = math.floor((ScrH() - hh) * 0.5)
+        self.SharedPreviewHolder.TargetW = hw
+        self.SharedPreviewHolder.TargetH = hh
     else
         self.AppearancePreviewX = sizeX - MenuUnit(420)
         self.AppearancePreviewY = MenuUnit(appearance_preview_shift_y)
@@ -1296,8 +1342,11 @@ function PANEL:PostInit()
     selectorHeader:SetTall(MenuUnit(appearance_header_height))
     selectorHeader:DockMargin(0, MenuUnit(130), 0, 0)
     selectorHeader.Paint = function(this, w, h)
+        -- Limbo: the gold line draws out from the left each time a list opens
+        local f = math.Clamp((SysTime() - (selectorPanel.LineStart or 0)) / 0.25, 0, 1)
+        f = 1 - (1 - f) * (1 - f)
         surface.SetDrawColor(LIMBO_GOLD.r, LIMBO_GOLD.g, LIMBO_GOLD.b, 200)
-        surface.DrawRect(0, h - MenuUnit(2), w, MenuUnit(2))
+        surface.DrawRect(0, h - MenuUnit(2), w * f, MenuUnit(2))
     end
 
     selectorHeaderTitle = vgui.Create("DLabel", selectorHeader)

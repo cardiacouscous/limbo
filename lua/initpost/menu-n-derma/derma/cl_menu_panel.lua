@@ -684,6 +684,14 @@ function PANEL:CreateAppearancePreview()
             nextY = targetPosY
         end
         this:SetPos(math.Round(nextX), math.Round(nextY))
+        -- Limbo: the appearance editor can also grow/shrink the character smoothly
+        if this.TargetW and this.TargetH then
+            local w, h = this:GetSize()
+            local nw, nh = LerpFT(0.18, w, this.TargetW), LerpFT(0.18, h, this.TargetH)
+            if math.abs(this.TargetW - nw) < 1 then nw = this.TargetW end
+            if math.abs(this.TargetH - nh) < 1 then nh = this.TargetH end
+            this:SetSize(math.Round(nw), math.Round(nh))
+        end
     end
 
     local preview = vgui.Create("DModelPanel", holder)
