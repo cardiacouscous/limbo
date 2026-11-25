@@ -66,8 +66,8 @@ SWEP.AnimList = {
 }
 
 if CLIENT then
-	SWEP.WepSelectIcon = Material("melgun/Brokenchair.png")
-	SWEP.IconOverride = "melgun/Brokenchair.png"
+	SWEP.WepSelectIcon = Material("melgun/brokenchair.png")
+	SWEP.IconOverride = "melgun/brokenchair.png"
 	SWEP.BounceWeaponIcon = false
 end
 

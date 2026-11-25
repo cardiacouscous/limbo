@@ -17,7 +17,7 @@ SWEP.modelscale2 = 1
 SWEP.BleedMultiplier = 1.5
 SWEP.PainMultiplier = 3
 
-SWEP.DamagePrimary = 20
+SWEP.DamagePrimary = 300
 SWEP.DamageSecondary = 55
 
 SWEP.AttackTime = 0.95

@@ -32,8 +32,8 @@ SWEP.WaitTime1 = 0.9
 SWEP.AttackPos = Vector(-2,-5,-10)
 
 if CLIENT then
-	SWEP.WepSelectIcon = Material("melgun/Milk.png")
-	SWEP.IconOverride = "melgun/Milk.png"
+	SWEP.WepSelectIcon = Material("melgun/milk.png")
+	SWEP.IconOverride = "melgun/milk.png"
 	SWEP.BounceWeaponIcon = false
 end
 
