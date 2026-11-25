@@ -616,6 +616,57 @@ hook.Add("OnNetVarSet","wounds_netvar",function(index, key, var)
 	end
 end)
 
+-- [Limbo] Remorse's artery sounds (a slit-throat hiss, then a splat where the blood lands),
+-- when limbo_rem_bodysounds is on
+local function limboArterySoundEnt(ent)
+	if not IsValid(ent) then return end
+	local rag = ent.GetNWEntity and ent:GetNWEntity("FakeRagdoll")
+	if IsValid(rag) then return rag end
+	rag = ent.GetNWEntity and ent:GetNWEntity("RagdollDeath")
+	if IsValid(rag) then return rag end
+	return ent
+end
+
+local function limboArteryWoundPos(ent, wound)
+	local target = limboArterySoundEnt(ent)
+	if not IsValid(target) then return end
+	local bone = target:LookupBone(wound[4] or "")
+	if bone then
+		local mat = target:GetBoneMatrix(bone)
+		if mat and wound[2] and wound[3] then
+			return LocalToWorld(wound[2], wound[3], mat:GetTranslation(), mat:GetAngles()), target
+		end
+	end
+	return target:GetPos(), target
+end
+
+local function limboQueueArterySound(ent, wound)
+	if not IsValid(ent) or not wound then return end
+	local delay = math.Rand(1, 1.25)
+	local artery = wound[7]
+	local org = ent.organism or {}
+
+	if artery == "arteria" and (not ent:IsPlayer() or ent:Alive() and not org.otrub) then
+		local _, target = limboArteryWoundPos(ent, wound)
+		if IsValid(target) then
+			local snd = CreateSound(target, "rem_neckslit.ogg")
+			if snd then
+				snd:SetSoundLevel(75)
+				snd:PlayEx(1, math.random(95, 110))
+				snd:ChangeVolume(0, delay)
+				timer.Simple(delay + 0.05, function() if snd then snd:Stop() end end)
+			end
+		end
+	end
+
+	timer.Simple(delay, function()
+		if not IsValid(ent) then return end
+		local pos = limboArteryWoundPos(ent, wound)
+		if not pos then return end
+		sound.Play("arteryblooddrip/splat-blood" .. math.random(1, 10) .. ".wav", pos, 70, math.random(95, 110), artery == "arteria" and 0.85 or 1)
+	end)
+end
+
 hook.Add("OnNetVarSet","wounds_netvar2",function(index, key, var)
 	if key == "arterialwounds" then
 		local ent = Entity(index)
@@ -626,6 +677,13 @@ hook.Add("OnNetVarSet","wounds_netvar2",function(index, key, var)
 				for i = 1, #ent.arterialwounds do
 					if not var[i] then continue end
 					var[i][5] = ent.arterialwounds[i][5]
+				end
+			end
+
+			if LimboRem and LimboRem.Body() then
+				for i = 1, #(var or {}) do
+					if ent.arterialwounds and ent.arterialwounds[i] then continue end
+					limboQueueArterySound(ent, var[i])
 				end
 			end
 
