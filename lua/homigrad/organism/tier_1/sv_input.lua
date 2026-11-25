@@ -165,6 +165,13 @@ local ents_Create = ents.Create
 function hg.organism.AmputateLimb(org, limb)
 	if org[limb.."amputated"] == nil then return end
 
+	-- [Limbo] no separate leg loss once the body's been split in half
+	local tply = org.owner
+	if IsValid(tply) and not tply:IsPlayer() then
+		tply = (hg.RagdollOwner and hg.RagdollOwner(tply)) or (IsValid(tply.ply) and tply.ply) or tply:GetNWEntity("ply")
+	end
+	if org.torsoamputated or (IsValid(tply) and (tply.__hgTorsoPending or tply.__hgTorsoBlastQueued or tply:GetNWBool("hgTorsoSevered", false))) then return end
+
 	local bone = limbs[limb]
 	if !IsValid(org.owner) then return end
 	local len = org.owner:BoneLength(org.owner:LookupBone(bone))
