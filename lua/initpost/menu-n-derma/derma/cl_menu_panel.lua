@@ -1,10 +1,8 @@
 local PANEL = {}
 local curent_panel 
 local red_select = Color(224,180,60) -- Limbo accent
-local menu_music_default_path = "sound/limbo/music/menu.mp3" -- Limbo: menu track (placeholder)
-local menu_music_appearance_paths = { -- one is picked each time the appearance screen opens
-    "sound/limbo/music/appearance1.mp3",
-    "sound/limbo/music/appearance2.mp3",
+local menu_music_default_path = "sound/limbo/music/appearance2.mp3" -- Limbo: ESC menu track (CTI's Dullbine 2)
+local menu_music_appearance_paths = { -- appearance screen (CTI's Dullbine 3)
     "sound/limbo/music/appearance3.mp3",
 }
 local menu_music_flags = "noblock noplay"
@@ -1442,7 +1440,7 @@ function PANEL:UseDefaultMenuMusic()
 end
 
 function PANEL:UseAppearanceMenuMusic()
-    if menu_music_target_path and string.find(menu_music_target_path, "appearance", 1, true) then return end
+    if menu_music_target_path and table.HasValue(menu_music_appearance_paths, menu_music_target_path) then return end
     self:SetMenuMusic(menu_music_appearance_paths[math.random(#menu_music_appearance_paths)])
 end
 
