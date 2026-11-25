@@ -47,6 +47,23 @@ male["ValveBiped.Bip01_Head1"] = {
 		Vector(1.6, 2.1, 1.7),
 		Color(255, 0, 255)
 	},
+	-- [Limbo] eyes, from Remorse (limbo_rem_eyes)
+	{
+		"eyeL", --left eye
+		0.3,
+		Vector(4.5, -4.8, 1.2),
+		Angle(0, 0, 0),
+		Vector(0.7, 0.7, 0.7),
+		Color(255, 255, 255)
+	},
+	{
+		"eyeR", --right eye
+		0.3,
+		Vector(4.5, -4.8, -1.2),
+		Angle(0, 0, 0),
+		Vector(0.7, 0.7, 0.7),
+		Color(255, 255, 255)
+	},
 }
 
 local spine = 0.25
@@ -300,6 +317,23 @@ female["ValveBiped.Bip01_Head1"] = {
 		Vector(1.6, 2.1, 1.7),
 		Color(255, 0, 255)
 	},
+	-- [Limbo] eyes, from Remorse (limbo_rem_eyes)
+	{
+		"eyeL", --left eye
+		0.3,
+		Vector(3.5, -3.3, 1.2),
+		Angle(0, 0, 0),
+		Vector(0.7, 0.7, 0.7),
+		Color(255, 255, 255)
+	},
+	{
+		"eyeR", --right eye
+		0.3,
+		Vector(3.5, -3.3, -1.2),
+		Angle(0, 0, 0),
+		Vector(0.7, 0.7, 0.7),
+		Color(255, 255, 255)
+	},
 }
 
 female["ValveBiped.Bip01_Neck1"] = {
@@ -370,6 +404,8 @@ hg.organism.translationTbl = {
 	["skull"] = "Skull",
 	["jaw"] = "Jaw",
 	["brain"] = "Brain",
+	["eyeL"] = "Left eye",
+	["eyeR"] = "Right eye",
 	["arteria"] = "Carotid artery",
 	["larmdown"] = "Left forearm",
 	["larmartery"] = "Left arm artery",

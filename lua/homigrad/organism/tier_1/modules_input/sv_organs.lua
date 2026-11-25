@@ -189,6 +189,22 @@ local function hitArtery(artery, org, dmg, dmgInfo, boneindex, dir, hit)
 	return 0
 end
 
+-- [Limbo] eyes, from Remorse (limbo_rem_eyes): a destroyed eye blinds that side
+local function hitEye(key, label)
+	return function(org, bone, dmg, dmgInfo)
+		if not GetConVar("limbo_rem_eyes"):GetBool() then return 0 end
+		dmg = dmg * 0.75
+		org[key] = math.min((org[key] or 0) + dmg, 1)
+		hg.AddHarmToAttacker(dmgInfo, dmg * 5, label .. " damage harm")
+		org.painadd = org.painadd + dmg * 20
+		org.shock = org.shock + dmg * 10
+		dmgInfo:ScaleDamage(0.8)
+		return 0
+	end
+end
+input_list.eyeL = hitEye("eyeL", "Left eye")
+input_list.eyeR = hitEye("eyeR", "Right eye")
+
 input_list.arteria = function(org, bone, dmg, dmgInfo, boneindex, dir, hit)
 	return hitArtery("arteria", org, dmg, dmgInfo, "ValveBiped.Bip01_Neck1", dir, hit)
 end

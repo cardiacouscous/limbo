@@ -134,6 +134,8 @@ local list = {
 	{"skull", 1, true}, 
 	{"disorientation",1,true},
 	{"jaw", 1, true}, false, 
+	{"eyeL", 1, true},
+	{"eyeR", 1, true},
 	{"spine1", 1, true}, 
 	{"spine2", 1, true}, 
 	{"spine3", 1, true}, 

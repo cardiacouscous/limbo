@@ -17,6 +17,7 @@ CreateConVar("limbo_rem_explosions", "1", FL, "Remorse's extra explosion layer (
 -- gore switches live here too so the Settings menu can see them
 CreateConVar("limbo_rem_torso", "1", FL, "Explosions can split bodies in half (0 = off)", 0, 1)
 CreateConVar("limbo_rem_headgib", "1", FL, "Remorse's head gibbing (0 = Z-City's)", 0, 1)
+CreateConVar("limbo_rem_eyes", "1", FL, "Eyes can be hit and destroyed, blinding that side, with eye gore (0 = off)", 0, 1)
 
 LimboRem = LimboRem or {}
 function LimboRem.Body() return cvBody:GetBool() end

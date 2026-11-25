@@ -15,6 +15,8 @@ hook.Add("Org Clear", "Main", function(org)
 	module.metabolism[1](org)
 	module.random_events[1](org)
 	org.brain = 0
+	org.eyeL = 0 -- [Limbo] eyes, from Remorse
+	org.eyeR = 0
 	org.consciousness = 1
 	org.disorientation = 0
 	org.jaw = 0
@@ -118,6 +120,8 @@ local function send_organism(org, ply)
 	sendtable.alive = org.alive
 	sendtable.otrub = org.otrub
 	sendtable.owner = org.owner
+	sendtable.eyeL = org.eyeL
+	sendtable.eyeR = org.eyeR
 	sendtable.stamina = org.stamina
 	sendtable.immobilization = org.immobilization
 	sendtable.adrenaline = org.adrenaline
@@ -200,6 +204,8 @@ local function send_bareinfo(org)
 	sendtable.alive = org.alive
 	sendtable.otrub = org.otrub
 	sendtable.owner = org.owner
+	sendtable.eyeL = org.eyeL
+	sendtable.eyeR = org.eyeR
 	sendtable.bloodtype = org.bloodtype
 	sendtable.pulse = org.pulse
 	sendtable.blood = org.blood
@@ -355,6 +361,21 @@ hook.Add("Org Think", "Main", function(owner, org, timeValue)
 		module.lungs[2](owner, org, timeValue)
 	end
 
+	-- [Limbo] a destroyed eye blinds that side (Remorse's eyes, limbo_rem_eyes)
+	if GetConVar("limbo_rem_eyes"):GetBool() then
+		local eyeL, eyeR = org.eyeL or 0, org.eyeR or 0
+		if eyeL < 1 and eyeR < 1 then
+			if org.limboEyeBlind then org.blindness = nil end
+			org.limboEyeBlind = nil
+		else
+			org.blindness = (eyeL >= 1 and eyeR >= 1) and 0 or (eyeL >= 1 and 2 or 1)
+			org.limboEyeBlind = true
+		end
+	elseif org.limboEyeBlind then
+		org.blindness = nil
+		org.limboEyeBlind = nil
+	end
+
 	if isPly then
 		module.liver[2](owner, org, timeValue)
 	end
@@ -496,6 +517,8 @@ hook.Add("Org Think", "Main", function(owner, org, timeValue)
 		-- you'd need to give 1 thiamine each 4 minutes
 
 		if org.liver < 1 then org.liver = math.Approach(org.liver, 0, naturalHeal) end
+		if (org.eyeL or 0) < 1 then org.eyeL = math.Approach(org.eyeL or 0, 0, naturalHeal) end
+		if (org.eyeR or 0) < 1 then org.eyeR = math.Approach(org.eyeR or 0, 0, naturalHeal) end
 		if org.heart < 1 then org.heart = math.Approach(org.heart, 0, naturalHeal) end
 		if org.stomach < 1 then org.stomach = math.Approach(org.stomach, 0, naturalHeal) end
 		if org.intestines < 1 then org.intestines = math.Approach(org.intestines, 0, naturalHeal) end
