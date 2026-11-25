@@ -176,6 +176,7 @@ if not game.IsDedicated() then
 	hg.settings:AddOpt("Limbo (server)","limbo_remorsehands", "Remorse hands (charge punch, shove)")
 	hg.settings:AddOpt("Limbo (server)","limbo_rem_torso", "Explosions can split bodies in half")
 	hg.settings:AddOpt("Limbo (server)","limbo_rem_headgib", "Remorse head gibbing (off = Z-City's)")
+	hg.settings:AddOpt("Limbo (server)","limbo_compat", "Adjust Limbo for installed mods (Milsim reverb...)")
 
 	hg.settings:AddOpt("Sound","limbo_rem_gunsounds", "Remorse gun sounds (off = Z-City's)")
 	hg.settings:AddOpt("Sound","limbo_rem_bodysounds", "Remorse bone, blood and flesh sounds")

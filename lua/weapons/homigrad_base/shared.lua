@@ -503,11 +503,14 @@ function SWEP:PlaySndDist(snd)
 		local suppressorVolume = self.Supressor and (self.DOZVUK and 10 or 60) or 100
 		local finalVolume = suppressorVolume * roomMultiplier
 
-		EmitSound(snd, owner:GetPos(), owner:EntIndex(), CHAN_STATIC, 1, finalVolume, 0, 90)
+		-- [Limbo] quieter while a reverb mod like Milsim is running (lua/homigrad/limbo/sh_compat.lua)
+		local distVol = hg.LimboCompat and hg.LimboCompat.DistVolume() or 1
+
+		EmitSound(snd, owner:GetPos(), owner:EntIndex(), CHAN_STATIC, distVol, finalVolume, 0, 90)
 
 		local farPitch = math.Clamp(100 - (dist / 1000), 75, 95)
 		if dist > 1000 then
-			EmitSound(snd, owner:GetPos(), owner:EntIndex() + 1, CHAN_STATIC, 1, finalVolume * 1.2, 0, farPitch)
+			EmitSound(snd, owner:GetPos(), owner:EntIndex() + 1, CHAN_STATIC, distVol, finalVolume * 1.2, 0, farPitch)
 		end
 	end)
 end
@@ -1261,10 +1264,10 @@ function SWEP:CoreStep()
 		self:SetClip1(self:GetNWInt("Clip1", self:Clip1()))
 	end
 
-	-- [Limbo] tell reverb addons (Milsim Weapon Acoustics, Dynamic Weapon Reverb) when this gun is suppressed
-	local suppressed = (SERVER and self.Supressor or self:GetNWBool("Supressor")) and true or false
-	self.MWA_Suppressed = suppressed
-	self.dwr_customIsSuppressed = suppressed
+	-- [Limbo] tell reverb mods when this gun is suppressed (lua/homigrad/limbo/sh_compat.lua)
+	if hg.LimboCompat then
+		hg.LimboCompat.MarkSuppressor(self, (SERVER and self.Supressor or self:GetNWBool("Supressor")) and true or false)
+	end
 
 	--self:CanRest()
 
