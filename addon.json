@@ -1,7 +1,10 @@
 {
 	"title": "Limbo",
 	"type": "gamemode",
-	"tags": ["fun", "realism"],
+	"tags": [
+		"fun",
+		"realism"
+	],
 	"ignore": [
 		"*.dll",
 		"*.md",
@@ -9,6 +12,8 @@
 		".github/*",
 		".gitignore",
 		"_base/*",
-		"lua/homigrad/limbo/debug/*"
+		"lua/homigrad/limbo/debug/*",
+		"LICENSE",
+		"lua/*.txt"
 	]
 }
