@@ -1141,7 +1141,6 @@ local limboTips = {
     "hold Alt and press E to pick up chairs, bottles and other props as weapons",
     "when \"wake up\" shows while you're out, press E",
     "your latest body keeps its gear, so you can go back for it",
-    "type !v and a message to talk through the synthesizer",
     "shoot a locked door's handle to open it",
     "kick a wooden door enough and it comes apart",
 }
@@ -1198,7 +1197,10 @@ function PANEL:DrawLimboInfo(w, h, mul)
     end
 
     self.LimboTip = self.LimboTip or limboTips[math.random(#limboTips)]
-    draw.SimpleText("tip: " .. self.LimboTip, "ZCity_Menu_Tiny", w * 0.5, h - MenuUnit(84), Color(160, 160, 168, 220 * mul), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+    -- Limbo: on the left, just above the credits and lined up with them, clear of the stats
+    local tipX = IsValid(self.bottomDock) and (self.bottomDock:GetX() + ScreenScale(10)) or MenuUnit(40)
+    local tipY = IsValid(self.bottomDock) and (self.bottomDock:GetY() - MenuUnit(6)) or (h - MenuUnit(90))
+    draw.SimpleText("tip: " .. self.LimboTip, "ZCity_Menu_Tiny", tipX, tipY, Color(160, 160, 168, 220 * mul), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 end
 
 function PANEL:PlayDisconnectCutscene()
