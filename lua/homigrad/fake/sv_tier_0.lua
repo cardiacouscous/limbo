@@ -1189,7 +1189,15 @@ hook.Add("Ragdoll Collide", "FallSounds", function(rag, data)
 	if not data.HitEntity:IsWorld() then return end
 	if data.OurOldVelocity:LengthSqr() < 165000 or (rag.NextSND or 0) > data.DeltaTime then return end
 	rag:EmitSound("player/falling_foley/fall_foley"..mRandom(13)..".wav", 60, mRandom(95, 115), 1, CHAN_AUTO)
-	if mRandom(3) == 2 then
+	if LimboRem and LimboRem.Body() then
+		-- [Limbo] Remorse's heavy body impacts (limbo_rem_bodysounds); a really hard hit gets a break in it
+		local speedSqr = data.OurOldVelocity:LengthSqr()
+		if speedSqr > 600000 then
+			rag:EmitSound("hardimpact/body_medium_break"..mRandom(2, 4)..".wav", 65, mRandom(90, 105), 1, CHAN_AUTO)
+		elseif mRandom(3) == 2 or speedSqr > 300000 then
+			rag:EmitSound("hardimpact/body_medium_impact_hard"..mRandom(6)..".wav", 60, mRandom(90, 105), 1, CHAN_AUTO)
+		end
+	elseif mRandom(3) == 2 then
 		rag:EmitSound("physics/flesh/flesh_impact_hard"..mRandom(6)..".wav", 55, mRandom(85, 105), 1, CHAN_AUTO)
 	end
 
