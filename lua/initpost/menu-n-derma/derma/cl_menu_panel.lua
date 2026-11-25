@@ -143,6 +143,8 @@ local function MenuUnit(num)
 end
 
 local function CreateMainMenuFonts()
+    surface.CreateFont("Limbo_InfoLabel", {font = "Limbo Dokdo", size = ScreenScale(9), weight = 400, antialias = true})
+
     surface.CreateFont("ZCity_Menu_Tiny", {
         font = "Arial",
         size = ScreenScale(7),
@@ -151,7 +153,7 @@ local function CreateMainMenuFonts()
 
     surface.CreateFont("ZCity_Menu_Small", {
         font = "Limbo Dokdo",
-        size = ScreenScale(17),
+        size = ScreenScale(14),
         weight = 400
     })
 end
@@ -234,10 +236,10 @@ local color_red = Color(255,25,25,45)
 local clr_gray = Color(255,255,255,25)
 local clr_verygray = Color(10,10,19,235)
 local appearance_preview = {
-    width = 340,
-    height = 920,
-    right = 0,
-    top = 210,
+    width = 280,
+    height = 760,
+    right = 20,
+    top = 230,
     enter_time = 1.35,
     enter_delay = 0.35,
     exit_time = 0.7,
@@ -975,7 +977,7 @@ function PANEL:Init()
     local logoPanel = vgui.Create("DPanel", lDock)
     self.logoPanel = logoPanel
     logoPanel:Dock(BOTTOM)
-    logoPanel:SetTall(MenuUnit(190))
+    logoPanel:SetTall(MenuUnit(160))
     logoPanel:SetMouseInputEnabled(true)
     logoPanel:DockMargin(0, 0, 0, MenuUnit(menu_title.spacing))
     self.logoBaseMargin = MenuUnit(menu_title.spacing)
@@ -984,7 +986,7 @@ function PANEL:Init()
         local shakeX, shakeY = self:GetLiveShake(6.4, 7.2, MenuUnit(menu_live.shake_x), MenuUnit(menu_live.shake_y))
 
         -- logo image is 1008 x 263, tagline 627 x 104, drawn at the same scale
-        local lw = MenuUnit(400)
+        local lw = MenuUnit(320)
         local sc = lw / 1008
         local lh = 263 * sc
         local tw, th = 627 * sc, 104 * sc
@@ -1024,6 +1026,10 @@ function PANEL:Init()
         surface.SetMaterial(tagMat)
         surface.SetDrawColor(255, 255, 255, 230)
         surface.DrawTexturedRect(tx, ty, tw, th)
+
+        -- Limbo: a thin line between the logo and the buttons
+        surface.SetDrawColor(255, 255, 255, 45)
+        surface.DrawRect(MenuUnit(12), h - MenuUnit(4), MenuUnit(330), math.max(1, MenuUnit(1)))
     end
 
 
@@ -1113,10 +1119,67 @@ function PANEL:Paint(w,h)
             row = row + 1
         end
     end
+    if backgroundAlpha > 0 and not self.DisconnectCutscene then
+        self:DrawLimboInfo(w, h, backgroundAlpha / 255)
+    end
     if (self.DisconnectBlackAlpha or 0) > 0 then
         surface.SetDrawColor(0, 0, 0, self.DisconnectBlackAlpha)
         surface.DrawRect(0, 0, w, h)
     end
+end
+
+-- Limbo: last death and this session under the character, and a tip along the bottom
+local limboTips = {
+    "hold R and click to charge a heavy swing",
+    "right click with a melee weapon to block",
+    "hold Alt and press E to pick up chairs, bottles and other props as weapons",
+    "when \"wake up\" shows while you're out, press E",
+    "your latest body keeps its gear, so you can go back for it",
+    "type !v and a message to talk through the synthesizer",
+    "shoot a locked door's handle to open it",
+    "kick a wooden door enough and it comes apart",
+}
+
+local function FormatTime(sec)
+    sec = math.max(0, math.floor(sec or 0))
+    if sec >= 3600 then return string.format("%d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60) end
+    return string.format("%d:%02d", sec / 60, sec % 60)
+end
+
+local function Ago(t)
+    local d = CurTime() - t
+    if d < 60 then return "just now" end
+    if d < 3600 then return math.floor(d / 60) .. " min ago" end
+    return math.floor(d / 3600) .. " h ago"
+end
+
+function PANEL:DrawLimboInfo(w, h, mul)
+    local stats = hg.LimboStats or {}
+    local holder = self.previewHolder
+
+    if IsValid(holder) and holder.TargetX then
+        local x = holder.TargetX + MenuUnit(10)
+        local y = math.min(holder.TargetY + holder:GetTall() - MenuUnit(30), h - MenuUnit(100))
+        local labelX, valueX = x, x + MenuUnit(110)
+        surface.SetDrawColor(255, 255, 255, 45 * mul)
+        surface.DrawRect(x, y, holder:GetWide() - MenuUnit(10), math.max(1, MenuUnit(1)))
+
+        local last = stats.lastDeath
+        local lastText = last and (last.cause .. ", " .. Ago(last.time)) or "not yet"
+        local alive = stats.lifeStart and (CurTime() - stats.lifeStart) or 0
+        local longest = math.max(stats.longest or 0, LocalPlayer():Alive() and alive or 0)
+        local sessionText = string.format("%d kills  -  %d deaths  -  longest %s", stats.kills or 0, stats.deaths or 0, FormatTime(longest))
+
+        local gold = Color(224, 180, 60, 255 * mul)
+        local grey = Color(200, 200, 205, 255 * mul)
+        draw.SimpleText("last death", "Limbo_InfoLabel", labelX, y + MenuUnit(10), gold)
+        draw.SimpleText(lastText, "ZCity_Menu_Tiny", valueX, y + MenuUnit(13), grey)
+        draw.SimpleText("this session", "Limbo_InfoLabel", labelX, y + MenuUnit(36), gold)
+        draw.SimpleText(sessionText, "ZCity_Menu_Tiny", valueX, y + MenuUnit(39), grey)
+    end
+
+    self.LimboTip = self.LimboTip or limboTips[math.random(#limboTips)]
+    draw.SimpleText("tip: " .. self.LimboTip, "ZCity_Menu_Tiny", w * 0.5, h - MenuUnit(22), Color(160, 160, 168, 220 * mul), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 end
 
 function PANEL:PlayDisconnectCutscene()
