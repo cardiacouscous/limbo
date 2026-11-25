@@ -6,6 +6,7 @@
 	  - guns tell it when their suppressor is on (it can't read Z-City's suppressors itself)
 	  - Z-City's own distant gunshot is played quieter while Milsim is running,
 	    so Milsim's echo leads instead of the two doubling up
+	  - Milsim's bullet cracks are turned off once per player (Z-City has its own)
 
 	Nothing here does anything when those mods aren't installed.
 ]]
@@ -43,4 +44,19 @@ function C.MarkSuppressor(wep, suppressed)
 		wep.MWA_Suppressed = nil
 		wep.dwr_customIsSuppressed = nil
 	end
+end
+
+if CLIENT then
+	-- Milsim's bullet cracks double up with Z-City's own, so turn Milsim's off once, the first time
+	-- a player joins with it. After that it's their own setting (cl_mwa_cracks 1 brings them back).
+	hook.Add("InitPostEntity", "limbo_compat_milsim_cracks", function()
+		timer.Simple(5, function()
+			if not C.On() or not C.Milsim() then return end
+			if cookie.GetString("limbo_mwa_cracks_set", "") == "1" then return end
+			if GetConVar("cl_mwa_cracks") then
+				RunConsoleCommand("cl_mwa_cracks", "0")
+				cookie.Set("limbo_mwa_cracks_set", "1")
+			end
+		end)
+	end)
 end
