@@ -169,3 +169,66 @@ end)
 hook.Add("PlayerSpawn", "limbo_achievements", function(ply)
 	ply.limboLastKillAt = nil
 end)
+
+--\\ still fighting: kills made while broken (I can still fight, Don't need this/that/any of these)
+local function StillFighting(killer)
+	if not IsValid(killer) or not killer:Alive() then return end
+	local org = killer.organism
+	if not org then return end
+	if (org.spine1 or 0) >= hg.organism.fake_spine1 or (org.spine2 or 0) >= hg.organism.fake_spine2 or (org.spine3 or 0) >= hg.organism.fake_spine3 then
+		Give(killer, "limbo_stillfight")
+	end
+	local arm = org.larmamputated or org.rarmamputated
+	local leg = org.llegamputated or org.rlegamputated
+	if arm then Give(killer, "limbo_dontneedthis") end
+	if leg then Give(killer, "limbo_dontneedthat") end
+	if arm and leg then Give(killer, "limbo_dontneedany") end
+end
+
+hook.Add("PlayerDeath", "limbo_achievements_stillfighting", function(victim, inflictor, attacker)
+	StillFighting(KillerOf(victim, attacker))
+end)
+
+hook.Add("OnNPCKilled", "limbo_achievements_stillfighting", function(npc, attacker)
+	StillFighting(PlayerOf(attacker))
+end)
+--//
+
+--\\ Halved (split in half) and How did we get here? (all four limbs gone, still alive)
+timer.Create("limbo_achievements_body", 1, 0, function()
+	for _, ply in ipairs(player.GetAll()) do
+		if ply:GetNWBool("hgTorsoSevered", false) then Give(ply, "limbo_halved") end
+		local org = ply.organism
+		if ply:Alive() and org and org.larmamputated and org.rarmamputated and org.llegamputated and org.rlegamputated then
+			Give(ply, "limbo_howdid")
+		end
+	end
+end)
+--//
+
+--\\ Wind-up: a fully charged melee hit that breaks a skull or hurts the brain
+hook.Add("EntityTakeDamage", "limbo_achievements_windup", function(target, dmg)
+	local attacker = dmg:GetAttacker()
+	if not IsValid(attacker) or not attacker:IsPlayer() then return end
+	local wep = attacker:GetActiveWeapon()
+	if not IsValid(wep) or not wep.GetChargeFraction or not wep.GetAttackType then return end
+	if wep:GetAttackType() ~= 3 or wep:GetChargeFraction() < 0.95 then return end
+
+	local owner = PlayerOf(target) or target
+	local org = owner.organism or target.organism
+	if not org then return end
+	local skull, brain = org.skull or 0, org.brain or 0
+	timer.Simple(0, function()
+		if not IsValid(attacker) then return end
+		if ((org.skull or 0) >= 1 and skull < 1) or (org.brain or 0) > brain + 0.01 then
+			Give(attacker, "limbo_windup")
+		end
+	end)
+end)
+--//
+
+--\\ Kamikaze: a grenade with its spoon off goes off in your hand (marked by the grenade base)
+hook.Add("EntityRemoved", "limbo_achievements_kamikaze", function(ent)
+	if ent.limboCookedBy and ent.Exploded then Give(ent.limboCookedBy, "limbo_kamikaze") end
+end)
+--//

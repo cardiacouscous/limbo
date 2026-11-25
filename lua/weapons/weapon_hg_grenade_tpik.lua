@@ -249,6 +249,9 @@ function SWEP:Throw(mul, time, nosound, throwPosAdjust, throwAngAdjust)
 
 	local owner = self.Thrower or self:GetOwner()
 	local ent = ents.Create(self.ENT)
+	if self.limboCooked and IsValid(owner) and owner:IsPlayer() and string.StartWith(self.ENT, "ent_hg_grenade") and self.ENT ~= "ent_hg_grenade_flashbang" then
+		ent.limboCookedBy = owner -- [Limbo] Kamikaze
+	end
 	local entOwner = IsValid(owner.FakeRagdoll) and owner.FakeRagdoll or IsValid(owner) and owner
 	throwPosAdjust = throwPosAdjust or Vector(0,0,5)
 	throwAngAdjust = throwAngAdjust or Angle(0,0,0)
@@ -471,6 +474,7 @@ function SWEP:ThinkAdd()
 		self:GetOwner():ChatPrint(self.SpoonTime - CurTime())
 	end
 	if self.SpoonTime and self.SpoonTime + self.timeToBoom < CurTime() and not self.InThrowing then
+		self.limboCooked = true -- [Limbo] went off in the hand (Kamikaze achievement)
 		self.InThrowing = true
 		self:SetShowGrenade(false)
 		self:Throw(0, self.SpoonTime or CurTime(),nil,Vector(0,0,0),Angle(0,0,0))
