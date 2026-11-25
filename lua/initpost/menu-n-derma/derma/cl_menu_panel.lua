@@ -143,7 +143,7 @@ local function MenuUnit(num)
 end
 
 local function CreateMainMenuFonts()
-    surface.CreateFont("Limbo_InfoLabel", {font = "Limbo Dokdo", size = ScreenScale(9), weight = 400, antialias = true})
+    surface.CreateFont("Limbo_InfoLabel", {font = "Arial", size = ScreenScale(7), weight = 700, antialias = true})
 
     surface.CreateFont("ZCity_Menu_Tiny", {
         font = "Arial",
@@ -251,9 +251,9 @@ local appearance_preview = {
     light_back = Color(0, 0, 0, 255),
     light_top = Color(55, 55, 55, 255),
     light_bottom = Color(0, 0, 0, 255),
-    fov = 13,
+    fov = 18, -- Limbo: wide enough to fit the whole body, feet included
     cam_pos = Vector(100, 0, 65),
-    look_ang = Angle(11, 180, 0),
+    look_ang = Angle(15, 180, 0),
     entity_ang = Angle(0, 0, 0),
     head_yaw = -45,
     head_pitch = 0,
@@ -1166,8 +1166,6 @@ function PANEL:DrawLimboInfo(w, h, mul)
     if IsValid(holder) and holder.TargetX then
         local x = holder.TargetX + MenuUnit(10)
         local y = math.min(holder.TargetY + holder:GetTall() - MenuUnit(30), h - MenuUnit(100))
-        surface.SetDrawColor(255, 255, 255, 45 * mul)
-        surface.DrawRect(x, y, holder:GetWide() - MenuUnit(10), math.max(1, MenuUnit(1)))
         -- Limbo: the two lines sit just left of the character, ending where it starts
         local rightX = holder.TargetX - MenuUnit(6)
 
@@ -1179,18 +1177,28 @@ function PANEL:DrawLimboInfo(w, h, mul)
 
         local gold = Color(224, 180, 60, 255 * mul)
         local grey = Color(200, 200, 205, 255 * mul)
-        local function Row(label, value, ry)
+        local gap = MenuUnit(10)
+        local function RowWidth(label, value)
             surface.SetFont("ZCity_Menu_Tiny")
             local vw = surface.GetTextSize(value)
-            draw.SimpleText(value, "ZCity_Menu_Tiny", rightX, ry + MenuUnit(3), grey, TEXT_ALIGN_RIGHT)
-            draw.SimpleText(label, "Limbo_InfoLabel", rightX - vw - MenuUnit(10), ry, gold, TEXT_ALIGN_RIGHT)
+            surface.SetFont("Limbo_InfoLabel")
+            return vw + gap + surface.GetTextSize(label), vw
         end
-        Row("last death", lastText, y + MenuUnit(10))
-        Row("this session", sessionText, y + MenuUnit(36))
+        local function Row(label, value, ry)
+            local _, vw = RowWidth(label, value)
+            draw.SimpleText(value, "ZCity_Menu_Tiny", rightX, ry, grey, TEXT_ALIGN_RIGHT)
+            draw.SimpleText(label, "Limbo_InfoLabel", rightX - vw - gap, ry, gold, TEXT_ALIGN_RIGHT)
+        end
+        -- a short line above the two rows, only as wide as the text
+        local lineW = math.max(RowWidth("last death", lastText), RowWidth("this session", sessionText))
+        surface.SetDrawColor(255, 255, 255, 45 * mul)
+        surface.DrawRect(rightX - lineW, y, lineW, math.max(1, MenuUnit(1)))
+        Row("last death", lastText, y + MenuUnit(8))
+        Row("this session", sessionText, y + MenuUnit(30))
     end
 
     self.LimboTip = self.LimboTip or limboTips[math.random(#limboTips)]
-    draw.SimpleText("tip: " .. self.LimboTip, "ZCity_Menu_Tiny", w * 0.5, h - MenuUnit(22), Color(160, 160, 168, 220 * mul), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+    draw.SimpleText("tip: " .. self.LimboTip, "ZCity_Menu_Tiny", w * 0.5, h - MenuUnit(84), Color(160, 160, 168, 220 * mul), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 end
 
 function PANEL:PlayDisconnectCutscene()
