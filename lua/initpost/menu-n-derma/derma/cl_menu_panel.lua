@@ -1164,9 +1164,11 @@ function PANEL:DrawLimboInfo(w, h, mul)
 
     if IsValid(holder) and holder.TargetX then
         local x = holder.TargetX + MenuUnit(10)
-        local y = math.min(holder.TargetY + holder:GetTall() - MenuUnit(30), h - MenuUnit(100))
-        -- Limbo: the two lines sit just left of the character, ending where it starts
-        local rightX = holder.TargetX - MenuUnit(6)
+        -- Limbo: the two lines sit just left of the character, ending where it starts,
+        -- with the same slow idle sway as the rest of the menu (no cursor follow)
+        local swayX, swayY = self:GetLiveShake(4.3, 5.1, MenuUnit(menu_live.shake_x), MenuUnit(menu_live.shake_y))
+        local y = math.min(holder.TargetY + holder:GetTall() - MenuUnit(30), h - MenuUnit(100)) + swayY
+        local rightX = holder.TargetX - MenuUnit(6) + swayX
 
         local last = stats.lastDeath
         local lastText = last and (last.cause .. ", " .. Ago(last.time)) or "not yet"
