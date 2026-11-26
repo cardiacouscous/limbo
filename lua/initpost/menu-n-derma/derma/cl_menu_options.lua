@@ -184,6 +184,7 @@ if not game.IsDedicated() then
 	hg.settings:AddOpt("Sound","limbo_rem_bodysounds", "Remorse bone, blood and flesh sounds")
 	hg.settings:AddOpt("Sound","limbo_rem_explosions", "Remorse extra explosion sound")
 	hg.settings:AddOpt("Sound","limbo_footsteps", "Limbo footsteps (off = Z-City's)")
+	hg.settings:AddOpt("Sound","limbo_landingsounds", "Landing sounds")
 	hg.settings:AddOpt("Sound","limbo_gearrattle", "Gear rattles when running")
 	hg.settings:AddOpt("Sound","limbo_paingrunts", "Pain grunts")
 end
