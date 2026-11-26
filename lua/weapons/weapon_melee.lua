@@ -2893,15 +2893,8 @@ function SWEP:CustomThink()
             return
         end
 
-        local holdInputs = 0
-        if hg.KeyDown(owner, IN_ATTACK) then
-            holdInputs = holdInputs + 1
-        end
-        if hg.KeyDown(owner, IN_RELOAD) then
-            holdInputs = holdInputs + 1
-        end
-
-        if holdInputs < (self.ChargeHoldMinKeys or 1) then
+        -- [Limbo] letting go of click swings, whether or not R is still held (R only starts the charge)
+        if not hg.KeyDown(owner, IN_ATTACK) then
             if CurTime() - (self.ChargeStartedAt or CurTime()) < (self.ChargeTapCancelTime or 0.12) then
                 self:CancelChargeAttack(true)
             else
